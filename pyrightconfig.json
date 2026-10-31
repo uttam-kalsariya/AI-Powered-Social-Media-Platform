@@ -1,0 +1,10 @@
+{
+  "venvPath": "server",
+  "venv": "venv",
+  "extraPaths": [
+    "server/venv/Lib/site-packages",
+    "server",
+    "backend"
+  ],
+  "reportMissingImports": "none"
+}

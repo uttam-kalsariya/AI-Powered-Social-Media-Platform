@@ -1,10 +1,10 @@
 import os
 import sys
 import logging
-import certifi
-from pymongo import MongoClient, ASCENDING
-from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
-import mongomock
+import certifi  # type: ignore
+from pymongo import MongoClient, ASCENDING  # type: ignore
+from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError  # type: ignore
+import mongomock  # type: ignore
 from app.config import Config
 
 logger = logging.getLogger(__name__)
