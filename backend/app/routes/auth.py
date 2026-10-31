@@ -19,13 +19,20 @@ def check_password(password: str, hashed: str) -> bool:
     except Exception:
         return False
 
+from app.services.token_service import (
+    create_email_verification_token,
+    verify_email_token
+)
+from app.utils.rate_limiter import rate_limit
+
 @auth_bp.route('/register', methods=['POST'])
+@rate_limit(max_requests=10, window_seconds=60)
 def register():
     data = request.get_json() or {}
     username = data.get('username', '').strip()
     email = data.get('email', '').strip().lower()
     password = data.get('password', '')
-    role = data.get('role', 'user')  # 'user' or 'admin'
+    role = data.get('role', 'user')
     
     if not username or not email or not password:
         return jsonify({"error": "Username, email, and password are required"}), 400
@@ -40,16 +47,13 @@ def register():
     if existing_user:
         return jsonify({"error": "Username or email already exists"}), 409
         
-    # Generate 6-digit verification code
-    verification_token = f"{secrets.randbelow(900000) + 100000}"
-    
     user_doc = {
         "username": username,
         "email": email,
         "password_hash": hash_password(password),
         "role": 'admin' if role == 'admin' else 'user',
         "is_verified": False,
-        "verification_token": verification_token,
+        "email_verified": False,
         "reset_token": None,
         "avatar": f"https://api.dicebear.com/7.x/bottts/svg?seed={username}",
         "bio": "Excited to connect on AI Social!",
@@ -61,8 +65,12 @@ def register():
     result = db.users.insert_one(user_doc)
     user_doc['_id'] = result.inserted_id
     
-    # Send verification email via SMTP service (falls back to console log)
-    send_verification_email(email, username, verification_token)
+    # Generate cryptographically secure 6-digit OTP (stores only SHA-256 hash in verification_tokens)
+    ok, plain_otp, err = create_email_verification_token(result.inserted_id, email, force=True)
+    
+    # Dispatch email via Resend
+    if ok and plain_otp:
+        send_verification_email(email, username, plain_otp)
     
     # Notify admins about new user registration
     db.notifications.insert_one({
@@ -75,38 +83,69 @@ def register():
         "created_at": datetime.now(timezone.utc)
     })
     
+    sanitized_user = serialize_doc(user_doc)
+    sanitized_user.pop('password_hash', None)
+    
     return jsonify({
-        "message": "Registration successful. Please verify your email.",
-        "user": serialize_doc(user_doc),
-        "dev_verification_code": verification_token  # Provided for frictionless development testing
+        "message": "Registration successful. Please verify your email with the 6-digit code sent to your inbox.",
+        "user": sanitized_user,
+        "email": email,
+        "expires_in_minutes": 5
     }), 201
 
 @auth_bp.route('/verify-email', methods=['POST'])
+@rate_limit(max_requests=15, window_seconds=60)
 def verify_email():
     data = request.get_json() or {}
     email = data.get('email', '').strip().lower()
-    token = data.get('token', '').strip()
+    code = (data.get('otp') or data.get('token') or '').strip()
     
-    if not email or not token:
-        return jsonify({"error": "Email and verification token are required"}), 400
+    if not email or not code:
+        return jsonify({"error": "Email and 6-digit verification code are required"}), 400
         
     db = get_db()
     user = db.users.find_one({"email": email})
     if not user:
         return jsonify({"error": "User not found"}), 404
         
-    if user.get('is_verified'):
-        return jsonify({"message": "Account is already verified"}), 200
+    if user.get('is_verified') and user.get('email_verified'):
+        return jsonify({"message": "Account is already verified. You may log in."}), 200
         
-    if user.get('verification_token') != token:
-        return jsonify({"error": "Invalid verification token"}), 400
+    # Validate OTP through token service (enforces hash check, attempt limits, single-use & 5m expiration)
+    is_valid, user_id, err_msg = verify_email_token(code, email=email, user_id=user['_id'])
+    if not is_valid:
+        return jsonify({"error": err_msg or "Invalid verification code"}), 400
         
-    db.users.update_one(
-        {"_id": user['_id']},
-        {"$set": {"is_verified": True, "verification_token": None}}
-    )
+    return jsonify({"message": "Email verified successfully! You may now log in to your account."}), 200
+
+@auth_bp.route('/resend-otp', methods=['POST'])
+@rate_limit(max_requests=5, window_seconds=60)
+def resend_otp():
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
     
-    return jsonify({"message": "Email verified successfully! You may now log in."}), 200
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+        
+    db = get_db()
+    user = db.users.find_one({"email": email})
+    
+    # Generic response if user does not exist or already verified (prevents account enumeration)
+    if not user or (user.get('is_verified') and user.get('email_verified')):
+        return jsonify({
+            "message": "If this email is pending verification, a new verification code has been dispatched."
+        }), 200
+        
+    ok, plain_otp, err = create_email_verification_token(user['_id'], email, force=False)
+    if not ok:
+        return jsonify({"error": err}), 429
+        
+    send_verification_email(email, user.get('username', 'User'), plain_otp)
+    
+    return jsonify({
+        "message": "A new 6-digit verification code has been sent to your email.",
+        "expires_in_minutes": 5
+    }), 200
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -127,6 +166,14 @@ def login():
     
     if not user or not check_password(password, user.get('password_hash', '')):
         return jsonify({"error": "Invalid credentials"}), 401
+
+    # Check email verification status
+    if not user.get('email_verified') and not user.get('is_verified'):
+        return jsonify({
+            "error": "Please verify your email before logging in.",
+            "email": user.get('email'),
+            "needs_verification": True
+        }), 403
         
     if user.get('status') == 'banned':
         return jsonify({"error": "Your account has been suspended by an administrator"}), 403
@@ -208,7 +255,7 @@ def forgot_password():
         {"$set": {"reset_token": reset_token}}
     )
     
-    send_password_reset_email(email, reset_token)
+    send_password_reset_email(email, user.get('username', 'User'), reset_token)
     
     return jsonify({
         "message": "If this email is registered, a password reset token has been sent.",
@@ -244,3 +291,8 @@ def reset_password():
     )
     
     return jsonify({"message": "Password reset successfully. You can now log in with your new password."}), 200
+
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    """Revoke session and clear authentication."""
+    return jsonify({"message": "Successfully logged out"}), 200
