@@ -1,27 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "services": {
-    "client": {
-      "root": "client",
-      "framework": "vite"
-    },
-    "server": {
-      "root": "server",
-      "framework": "flask"
-    }
-  },
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": {
-        "service": "server"
-      }
+      "destination": "https://ai-powered-social-media-platform-erlu.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
-      "destination": {
-        "service": "client"
-      }
+      "destination": "/index.html"
     }
   ]
 }
