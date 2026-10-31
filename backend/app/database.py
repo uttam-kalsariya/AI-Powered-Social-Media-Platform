@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import certifi
 from pymongo import MongoClient, ASCENDING
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 import mongomock
@@ -48,6 +49,7 @@ def get_db(db_name: str = None, force_reconnect: bool = False):
             connectTimeoutMS=5000,
             socketTimeoutMS=10000,
             retryWrites=True,
+            tlsCAFile=certifi.where(),
             appName='Cluster0'
         )
         # Verify connection with an explicit ping command
