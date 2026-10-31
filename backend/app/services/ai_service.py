@@ -7,36 +7,44 @@ from app.config import Config
 
 logger = logging.getLogger(__name__)
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-flash-latest"]
 
 def _call_gemini(prompt: str) -> str:
-    """Helper to query Gemini API if GEMINI_API_KEY is available."""
+    """Helper to query Gemini API with automatic model fallback."""
     api_key = Config.GEMINI_API_KEY
     if not api_key:
         return ""
-    try:
-        url = f"{GEMINI_API_URL}?key={api_key}"
-        payload = {
-            "contents": [{
-                "parts": [{"text": prompt}]
-            }],
-            "generationConfig": {
-                "temperature": 0.7,
-                "maxOutputTokens": 600
-            }
+
+    payload = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }],
+        "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 600
         }
-        res = requests.post(url, json=payload, timeout=8)
-        if res.status_code == 200:
-            data = res.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if parts:
-                    return parts[0].get("text", "").strip()
-        else:
-            logger.warning(f"Gemini API returned status {res.status_code}: {res.text}")
-    except Exception as e:
-        logger.error(f"Error calling Gemini API: {e}")
+    }
+
+    for model_name in GEMINI_MODELS:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+            res = requests.post(url, json=payload, timeout=10)
+            if res.status_code == 200:
+                data = res.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        return parts[0].get("text", "").strip()
+            elif res.status_code in [429, 503, 404]:
+                logger.warning(f"Gemini {model_name} returned {res.status_code}, trying fallback model...")
+                continue
+            else:
+                logger.warning(f"Gemini API returned status {res.status_code}: {res.text}")
+        except Exception as e:
+            logger.warning(f"Error querying Gemini {model_name}: {e}")
+            continue
+
     return ""
 
 # ==================== FEATURE 1: POST GENERATION & IMPROVEMENT ====================
