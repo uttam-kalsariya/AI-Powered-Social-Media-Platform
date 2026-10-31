@@ -1,14 +1,42 @@
 # 🌟 Aura — AI-Powered Social Media Platform
 
-An enterprise-grade, full-stack social media application engineered with **React**, **Flask**, and **MongoDB**, featuring end-to-end authentication, dual user personas (**Admin** and **User**), real-time notifications, interactive social feeds, and a complete suite of **AI-powered creators & assistants**.
+An enterprise-grade, modern social media platform engineered with **React 19**, **Vite**, **Tailwind CSS**, **Python Flask**, and **MongoDB Atlas**, featuring end-to-end authentication, dual user personas (**Admin** and **User**), real-time notifications, interactive feeds, and an intelligent suite of **AI-driven creator tools and assistants**.
 
-**GitHub Repository**: [https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform.git](https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform.git)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![React](https://img.shields.io/badge/React-19.3-61dafb.svg?logo=react)](https://react.dev/)
+[![Flask](https://img.shields.io/badge/Flask-3.0.3-black.svg?logo=flask)](https://flask.palletsprojects.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248.svg?logo=mongodb)](https://www.mongodb.com/atlas)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
+[![Gemini AI](https://img.shields.io/badge/Google_Gemini-1.5_Flash-8E75C4.svg?logo=google)](https://deepmind.google/technologies/gemini/)
+
+**GitHub Repository**: [https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform](https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform.git)
+
+---
+
+## 📚 Complete Project Documentation Suite
+
+Explore the comprehensive engineering documentation maintained in this repository:
+
+| Document | Description |
+|---|---|
+| [**`PROJECT_OVERVIEW.md`**](PROJECT_OVERVIEW.md) | Problem statement, proposed solution, module breakdowns, and personas |
+| [**`TECH_STACK.md`**](TECH_STACK.md) | Technology choices, version matrix, and Architectural Decision Records (ADRs) |
+| [**`INSTALLATION.md`**](INSTALLATION.md) | Windows 11 setup guide, prerequisites, and startup commands |
+| [**`docs/DATABASE_SCHEMA.md`**](docs/DATABASE_SCHEMA.md) | MongoDB Atlas design, collection models, ER diagrams, and indexes |
+| [**`docs/API_DOCUMENTATION.md`**](docs/API_DOCUMENTATION.md) | Complete REST API endpoint reference, payloads, and response codes |
+| [**`docs/AUTHENTICATION.md`**](docs/AUTHENTICATION.md) | JWT tokens, Bcrypt password hashing, route guards, and email verification |
+| [**`docs/AI_FEATURES.md`**](docs/AI_FEATURES.md) | Google Gemini integration, copywriting tones, and local fallback engine |
+| [**`docs/DEVELOPMENT_ROADMAP.md`**](docs/DEVELOPMENT_ROADMAP.md) | Phase-by-phase development progress and future milestone tracker |
+| [**`docs/TESTING.md`**](docs/TESTING.md) | Quality assurance protocols, PowerShell test scripts, and test cases |
+| [**`docs/DEPLOYMENT.md`**](docs/DEPLOYMENT.md) | Production cloud deployment guides for Vercel, Render, and Atlas |
+| [**`CONTRIBUTING.md`**](CONTRIBUTING.md) | Git workflow, branch naming, and pull request guidelines |
+| [**`CHANGELOG.md`**](CHANGELOG.md) | Version history, updates, and release notes |
 
 ---
 
 ## 🚀 Key Features
 
-### 1. 🔐 Robust Authentication & Security
+### 1. 🔐 Robust Authentication & Role Management
 - **Registration & Login**: Secure credential authentication powered by `bcrypt` password hashing and `Flask-JWT-Extended`.
 - **Email Verification**: Generates verification tokens sent via SMTP (with dev console preview mode for local environments).
 - **Password Reset**: End-to-end tokenized forgot-password and reset-password workflow.
@@ -16,25 +44,23 @@ An enterprise-grade, full-stack social media application engineered with **React
 
 ### 2. 👥 Two User Personas
 - **Administrator**:
-  - Full platform overview & metrics: Total users, active users, posts, comments, moderation flags, and 24h logins.
-  - User management: Search, inspect last login, grant/revoke admin rights, ban/unban accounts.
-  - Content moderation queue: Inspect AI toxicity scores, dismiss flags, or delete inappropriate content.
+  - Live platform telemetry: Total users, active users, posts, comments, moderation flags, and 24h logins.
+  - User directory governance: Search users, inspect last login, grant/revoke admin rights, ban/unban accounts.
+  - Moderation queue: Inspect AI toxicity scores, dismiss flags, or delete violations.
   - Audit logs: Track user logins, signups, and admin actions.
 - **Standard User**:
-  - Create and manage personal profile (custom bio and avatars).
-  - Publish rich posts with optional images and hashtags.
-  - Like, comment, and engage with live feeds.
-  - Manage and edit own content.
-  - Receive interactive notifications for likes and comments.
+  - Personal profile management: Custom bio and avatar generator.
+  - Feed interaction: Share posts with text, images, and hashtags; like and comment on community content.
+  - Receive real-time interactive notifications for likes and comments.
 
-### 3. 🤖 AI Agent Integration (Full Suite)
-1. **AI Post Generation**: Creates compelling, formatted posts from a topic and chosen tone (`Casual`, `Professional`, `Witty`, `Inspirational`).
-2. **AI Tone Rewriting & Polish**: One-click content rephrasing into professional, witty, or inspirational tones.
+### 3. 🤖 Full AI Agent Suite
+1. **AI Post Generation**: Creates structured, formatted posts with hooks and hashtags based on a topic and chosen tone (`Casual`, `Professional`, `Witty`, `Inspirational`).
+2. **AI Tone Rewriting & Polish**: 1-click content rephrasing into professional, witty, or inspirational tones.
 3. **AI Discussion Summarization**: Instant multi-point summaries highlighting the key discussion sentiments in post threads.
 4. **AI Smart Replies**: Contextual 1-click comment suggestions based on post context.
 5. **AI Content Moderation Guard**: Automated safety filter detecting toxic keywords, abuse, and spam patterns with toxicity scoring.
 6. **Aura AI Social Strategist**: Interactive conversational assistant helping users brainstorm viral topics, write hooks, and refine strategies.
-- **Providers Supported**: Google Gemini API (`GEMINI_API_KEY`) with an intelligent local heuristic engine fallback.
+- **Resilient AI Fallback**: Dual-tier pipeline that automatically routes prompts to an intelligent local heuristic engine if an external API key is omitted or unavailable.
 
 ---
 
@@ -42,111 +68,72 @@ An enterprise-grade, full-stack social media application engineered with **React
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React (Vite), Vanilla CSS Glassmorphic Design System, Lucide Icons |
-| **Backend** | Python 3.12, Flask, Flask-CORS, Flask-JWT-Extended, PyMongo, bcrypt |
-| **Database** | MongoDB (Local / Atlas connection ready, with resilient in-memory fallback) |
-| **Email Service** | SMTP / TLS email delivery with developer console logger |
+| **Frontend** | React 19, Vite, Tailwind CSS, Lucide Icons, Axios, React Router |
+| **Backend** | Python 3.12, Flask, Flask-CORS, Flask-JWT-Extended, PyMongo, Bcrypt |
+| **Database** | MongoDB Atlas (Cloud Cluster) / Resilient in-memory mongomock fallback |
 | **AI Integration** | Google Gemini 1.5 Flash API + Built-in AI Social Heuristic Engine |
+| **Email Service** | SMTP / TLS email delivery with developer console logger |
 
 ---
 
-## 📁 Project Architecture
+## 📁 Project Directory Structure
 
 ```
 AI-Powered-Social-Media-Platform/
-├── client/                      # React Frontend
+├── client/                      # React Frontend (Vite)
 │   ├── src/
-│   │   ├── components/          # Navbar, PostCard, CreatePostCard, AdminDashboard, etc.
-│   │   ├── context/             # AuthContext state provider
-│   │   ├── services/            # API client service
+│   │   ├── components/          # Reusable UI components (Navbar, PostCard, CreatePostCard, etc.)
+│   │   ├── layouts/             # App layout wrappers
+│   │   ├── pages/               # Route views
+│   │   ├── hooks/               # Custom hooks (useDebounce, etc.)
+│   │   ├── services/            # axiosClient.js, api.js
+│   │   ├── context/             # AuthContext.jsx
+│   │   ├── utils/               # formatDate.js, etc.
+│   │   ├── assets/              # Static assets & icons
 │   │   ├── App.jsx              # Main view manager
-│   │   └── index.css            # Glassmorphic UI design system
-│   ├── index.html
+│   │   ├── main.jsx             # React entry point
+│   │   └── index.css            # Tailwind directives & glassmorphic tokens
+│   ├── tailwind.config.js       # Tailwind theme configuration
+│   ├── postcss.config.js        # PostCSS configuration
 │   ├── vite.config.js           # Server proxy configuration
 │   └── package.json
 │
-├── server/                      # Flask Backend
+├── server/                      # Flask Backend API
 │   ├── app/
 │   │   ├── routes/              # auth, posts, ai, admin, notifications, users
-│   │   ├── services/            # ai_service, email_service, db
 │   │   ├── models/              # helpers and serializers
+│   │   ├── services/            # ai_service, email_service, db
+│   │   ├── utils/               # response.py, validators.py
 │   │   ├── config.py            # Environment configurations
 │   │   └── __init__.py          # Flask app factory & initial data seeder
 │   ├── run.py                   # Server launch entry point
 │   ├── requirements.txt         # Python dependencies
 │   ├── .env.example             # Environment template
-│   └── .env                     # Local environment file
+│   └── .env                     # Local environment file (Excluded from Git)
 │
-├── .gitignore
-└── README.md
+├── docs/                        # Deep Technical Documentation
+│   ├── DATABASE_SCHEMA.md
+│   ├── API_DOCUMENTATION.md
+│   ├── AUTHENTICATION.md
+│   ├── AI_FEATURES.md
+│   ├── DEVELOPMENT_ROADMAP.md
+│   ├── TESTING.md
+│   └── DEPLOYMENT.md
+│
+├── PROJECT_OVERVIEW.md
+├── TECH_STACK.md
+├── INSTALLATION.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+├── LICENSE
+└── .gitignore
 ```
 
 ---
 
-## ⚙️ Environment Variables Setup
+## ⚡ Instant Demo Accounts
 
-### Server Configuration (`server/.env`):
-```env
-PORT=5000
-SECRET_KEY=your-secure-flask-secret-key
-JWT_SECRET_KEY=your-jwt-signing-key
-MONGO_URI=mongodb://localhost:27017/ai_social_media
-
-# Google Gemini API Key (optional - works with intelligent fallback if omitted)
-GEMINI_API_KEY=
-
-# SMTP Email Configuration (optional - logs to console if omitted)
-SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=
-SMTP_PASSWORD=
-EMAIL_FROM=noreply@aisocial.local
-```
-
----
-
-## 🏃 Getting Started & Local Development
-
-### 1. Prerequisites
-- Python 3.10+
-- Node.js 18+ and npm
-- (Optional) MongoDB local server or MongoDB Atlas URI
-
-### 2. Start Backend Server
-```bash
-cd server
-
-# Activate Python virtual environment
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-# source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run server (starts on http://127.0.0.1:5000)
-python run.py
-```
-
-### 3. Start Frontend Client
-In a new terminal window:
-```bash
-cd client
-
-# Install dependencies
-npm install
-
-# Start Vite development server
-npm run dev
-```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
-
----
-
-## ⚡ Pre-configured Demo Accounts
-
-For instant testing, use the 1-click demo buttons in the Sign In modal or log in with:
+For immediate evaluation, use the 1-click demo buttons in the Sign In modal or enter:
 
 | Persona | Username / Email | Password | Role |
 |---|---|---|---|
@@ -155,83 +142,26 @@ For instant testing, use the 1-click demo buttons in the Sign In modal or log in
 
 ---
 
-## 📊 Database Collections & Schema
+## 🏃 Quick Start Guide
 
-```mermaid
-erDiagram
-    USERS {
-        ObjectId _id PK
-        string username
-        string email
-        string password_hash
-        string role "user | admin"
-        boolean is_verified
-        string verification_token
-        string avatar
-        string bio
-        date created_at
-        date last_login
-        string status "active | banned"
-    }
-
-    POSTS {
-        ObjectId _id PK
-        string author_id FK
-        string author_name
-        string author_avatar
-        string content
-        string image_url
-        array tags
-        array likes "array of user IDs"
-        int likes_count
-        int comments_count
-        boolean is_flagged
-        float toxicity_score
-        string moderation_reason
-        date created_at
-        date updated_at
-    }
-
-    COMMENTS {
-        ObjectId _id PK
-        string post_id FK
-        string author_id FK
-        string author_name
-        string author_avatar
-        string content
-        date created_at
-    }
-
-    NOTIFICATIONS {
-        ObjectId _id PK
-        string recipient_id
-        string recipient_role "user | admin"
-        string sender_id
-        string sender_name
-        string type "login | like | comment | registration"
-        string message
-        string post_id
-        boolean is_read
-        date created_at
-    }
-
-    AUDIT_LOGS {
-        ObjectId _id PK
-        string event
-        string user_id
-        string username
-        string role
-        date timestamp
-        string ip
-    }
-
-    USERS ||--o{ POSTS : creates
-    USERS ||--o{ COMMENTS : writes
-    POSTS ||--o{ COMMENTS : contains
-    USERS ||--o{ NOTIFICATIONS : receives
+### 1. Start the Flask Backend (Terminal 1)
+```powershell
+cd server
+.\venv\Scripts\activate
+python run.py
 ```
+*API runs on `http://127.0.0.1:5000` (Health check: `http://127.0.0.1:5000/api/health`)*
+
+### 2. Start the React Frontend (Terminal 2)
+```powershell
+cd client
+npm run dev
+```
+*Application opens on `http://localhost:3000`*
+
+For complete setup instructions, see [**`INSTALLATION.md`**](INSTALLATION.md).
 
 ---
 
-## 🛡️ License & Submission
-Developed for the Full-Stack Technical Assignment. All secrets and sensitive credentials are kept strictly out of version control.
+## 🛡️ License
+Distributed under the [MIT License](LICENSE). Copyright © 2026 Uttam Kalsariya.
