@@ -9,3 +9,4 @@ requests==2.32.3
 mongomock==4.1.2
 setuptools<70
 resend>=2.50.1
+gunicorn==22.0.0
