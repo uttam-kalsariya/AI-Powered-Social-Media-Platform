@@ -33,8 +33,12 @@ export const AuthProvider = ({ children }) => {
     return await api.auth.register({ username, email, password, role });
   };
 
-  const verifyEmail = async (email, token) => {
-    return await api.auth.verifyEmail({ email, token });
+  const verifyEmail = async (email, otp) => {
+    return await api.auth.verifyEmail({ email, otp });
+  };
+
+  const resendOtp = async (email) => {
+    return await api.auth.resendOtp({ email });
   };
 
   const forgotPassword = async (email) => {
@@ -45,9 +49,17 @@ export const AuthProvider = ({ children }) => {
     return await api.auth.resetPassword({ email, token, new_password });
   };
 
-  const logout = () => {
-    setAuthToken(null);
-    setUser(null);
+  const logout = async () => {
+    try {
+      if (api.auth.logout) {
+        await api.auth.logout();
+      }
+    } catch (err) {
+      console.warn("Backend logout request completed with note:", err);
+    } finally {
+      setAuthToken(null);
+      setUser(null);
+    }
   };
 
   const updateUser = (updatedData) => {
@@ -64,6 +76,7 @@ export const AuthProvider = ({ children }) => {
       login,
       register,
       verifyEmail,
+      resendOtp,
       forgotPassword,
       resetPassword,
       logout,

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
 import { 
   Sparkles, 
@@ -11,14 +13,27 @@ import {
   LayoutDashboard, 
   Home,
   CheckCircle,
-  Clock
+  Clock,
+  Compass,
+  Film,
+  MessageSquare,
+  Sun,
+  Moon,
+  PlusSquare,
+  Settings
 } from 'lucide-react';
 
-export const Navbar = ({ currentTab, setCurrentTab, onOpenAuth, onOpenProfile }) => {
+export const Navbar = () => {
   const { user, isAdmin, logout } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  const activePath = location.pathname;
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -34,7 +49,7 @@ export const Navbar = ({ currentTab, setCurrentTab, onOpenAuth, onOpenProfile })
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 10000);
+      const interval = setInterval(fetchNotifications, 12000);
       return () => clearInterval(interval);
     }
   }, [user]);
@@ -49,251 +64,304 @@ export const Navbar = ({ currentTab, setCurrentTab, onOpenAuth, onOpenProfile })
     }
   };
 
+  const navLinks = [
+    { label: 'Feed', path: '/home', icon: Home },
+    { label: 'Explore', path: '/explore', icon: Compass },
+    { label: 'Reels', path: '/reels', icon: Film },
+    { label: 'Messages', path: '/messages', icon: MessageSquare },
+    { label: 'Aura AI', path: '/assistant', icon: Bot, isAi: true },
+    ...(isAdmin ? [{ label: 'Admin', path: '/admin', icon: LayoutDashboard, isAdmin: true }] : []),
+    { label: 'Profile', path: user ? `/profile/${user.username}` : '/login', icon: User },
+    { label: 'Settings', path: '/settings', icon: Settings },
+  ];
+
   return (
-    <header style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      background: 'rgba(9, 13, 22, 0.85)',
-      backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid var(--border-subtle)',
-      padding: '0.75rem 1.5rem',
-    }}>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '1rem',
-      }}>
-        {/* Brand */}
-        <div 
-          onClick={() => setCurrentTab('feed')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.65rem',
-            cursor: 'pointer',
-            userSelect: 'none'
-          }}
-        >
-          <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '10px',
-            background: 'var(--primary-gradient)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: 'var(--shadow-glow)'
-          }}>
-            <Sparkles size={20} color="#fff" />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'Outfit' }}>Aura</span>
-              <span className="badge badge-ai" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>AI Social</span>
+    <>
+      {/* ======================================================== */}
+      {/* DESKTOP & TABLET LEFT SIDEBAR (Instagram Style)           */}
+      {/* ======================================================== */}
+      <aside className="hidden md:flex flex-col justify-between fixed left-0 top-0 bottom-0 z-40 w-16 lg:w-60 bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] px-3 lg:px-4 py-5 select-none transition-all">
+        {/* Top Brand Logo */}
+        <div>
+          <div 
+            onClick={() => navigate('/home')}
+            className="flex items-center gap-3 px-2 py-2 cursor-pointer mb-6 rounded-xl hover:bg-[var(--bg-card-hover)] transition"
+          >
+            <div className="w-10 h-10 rounded-xl bg-[var(--instagram-gradient)] flex items-center justify-center shrink-0 shadow-[var(--shadow-glow)]">
+              <Sparkles size={22} color="#ffffff" />
+            </div>
+            <div className="hidden lg:flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="font-display font-extrabold text-xl tracking-tight text-[var(--text-primary)]">Aura</span>
+                <span className="badge badge-ai text-[0.62rem] px-1.5 py-0.5">AI</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Navigation Links */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button
-            onClick={() => setCurrentTab('feed')}
-            className={`btn ${currentTab === 'feed' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
-          >
-            <Home size={16} />
-            <span>Feed</span>
-          </button>
-
-          <button
-            onClick={() => setCurrentTab('assistant')}
-            className={`btn ${currentTab === 'assistant' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
-          >
-            <Bot size={16} />
-            <span>AI Assistant</span>
-          </button>
-
-          {isAdmin && (
-            <button
-              onClick={() => setCurrentTab('admin')}
-              className={`btn ${currentTab === 'admin' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{
-                padding: '0.5rem 0.9rem',
-                fontSize: '0.85rem',
-                borderColor: currentTab === 'admin' ? 'transparent' : 'rgba(217, 70, 239, 0.4)'
-              }}
-            >
-              <LayoutDashboard size={16} />
-              <span>Admin Dashboard</span>
-              <span className="badge badge-admin" style={{ fontSize: '0.6rem', padding: '0.1rem 0.35rem' }}>Admin</span>
-            </button>
-          )}
-        </nav>
-
-        {/* Actions / Auth */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', position: 'relative' }}>
-          {user ? (
-            <>
-              {/* Notifications Dropdown */}
-              <div style={{ position: 'relative' }}>
+          {/* Nav Items */}
+          <nav className="flex flex-col gap-1">
+            {navLinks.map((item) => {
+              const Icon = item.icon;
+              const isActive = activePath === item.path || (item.path === '/home' && activePath === '/');
+              return (
                 <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="btn btn-secondary"
-                  style={{
-                    padding: '0.55rem',
-                    borderRadius: '50%',
-                    position: 'relative',
-                  }}
-                  title="Notifications"
+                  key={item.label}
+                  onClick={() => navigate(item.path)}
+                  className={`flex items-center gap-3.5 px-3 py-2.5 rounded-xl font-medium text-sm transition text-left w-full ${
+                    isActive 
+                      ? 'bg-[var(--bg-surface-elevated)] font-bold text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-sm' 
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]'
+                  }`}
+                  title={item.label}
                 >
-                  <Bell size={18} />
+                  <Icon 
+                    size={20} 
+                    className={isActive ? (item.isAi ? 'text-emerald-500' : 'text-[#0095F6]') : ''} 
+                  />
+                  <span className="hidden lg:inline">{item.label}</span>
+                </button>
+              );
+            })}
+
+            {/* Notifications Trigger in Sidebar */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="flex items-center gap-3.5 px-3 py-2.5 rounded-xl font-medium text-sm transition text-left w-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]"
+                title="Notifications"
+              >
+                <div className="relative">
+                  <Bell size={20} />
                   {unreadCount > 0 && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '-4px',
-                      right: '-4px',
-                      background: 'var(--accent-rose)',
-                      color: '#fff',
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      borderRadius: '50%',
-                      width: '18px',
-                      height: '18px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 0 8px rgba(244, 63, 94, 0.6)'
-                    }}>
+                    <span className="absolute -top-1.5 -right-1.5 bg-[#f43f5e] text-white text-[0.6rem] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                       {unreadCount}
                     </span>
                   )}
-                </button>
+                </div>
+                <span className="hidden lg:inline">Notifications</span>
+              </button>
 
-                {showNotifications && (
-                  <div className="glass-panel-elevated" style={{
-                    position: 'absolute',
-                    top: '120%',
-                    right: 0,
-                    width: '320px',
-                    maxHeight: '400px',
-                    overflowY: 'auto',
-                    padding: '0.75rem',
-                    zIndex: 100,
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '0.6rem',
-                      borderBottom: '1px solid var(--border-subtle)',
-                      paddingBottom: '0.5rem'
-                    }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                        {isAdmin ? '🛡️ Admin & Login Alerts' : '🔔 Notifications'}
-                      </span>
-                      {unreadCount > 0 && (
-                        <button 
-                          onClick={handleMarkAllRead} 
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--accent-cyan)',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.2rem'
-                          }}
-                        >
-                          <CheckCircle size={12} /> Mark read
-                        </button>
-                      )}
-                    </div>
-
-                    {notifications.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                        No notifications yet
-                      </div>
-                    ) : (
-                      notifications.map(n => (
-                        <div 
-                          key={n.id || n._id}
-                          style={{
-                            padding: '0.6rem',
-                            borderRadius: 'var(--radius-sm)',
-                            marginBottom: '0.4rem',
-                            background: n.is_read ? 'rgba(255, 255, 255, 0.02)' : 'rgba(99, 102, 241, 0.1)',
-                            borderLeft: n.type === 'login' ? '3px solid #f59e0b' : '3px solid #6366f1',
-                            fontSize: '0.82rem'
-                          }}
-                        >
-                          <div style={{ fontWeight: 600, color: n.type === 'login' ? '#fcd34d' : 'var(--text-primary)' }}>
-                            {n.type === 'login' ? '🔑 User Login Alert' : n.sender_name}
-                          </div>
-                          <div style={{ color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                            {n.message}
-                          </div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <Clock size={10} />
-                            {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </div>
-                      ))
+              {/* Notifications Popup */}
+              {showNotifications && (
+                <div className="glass-panel-elevated absolute left-full top-0 ml-3 w-80 max-h-96 overflow-y-auto p-3 z-50 rounded-xl shadow-xl">
+                  <div className="flex justify-between items-center mb-2.5 pb-2 border-b border-[var(--border-subtle)]">
+                    <span className="font-semibold text-sm text-[var(--text-primary)]">
+                      {isAdmin ? '🛡️ Admin & Security' : '🔔 Notifications'}
+                    </span>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={handleMarkAllRead} 
+                        className="text-xs text-[#0095F6] flex items-center gap-1 hover:underline"
+                      >
+                        <CheckCircle size={12} /> Mark read
+                      </button>
                     )}
                   </div>
-                )}
-              </div>
+                  {notifications.length === 0 ? (
+                    <div className="text-center py-6 text-xs text-[var(--text-muted)]">
+                      No notifications yet
+                    </div>
+                  ) : (
+                    notifications.map(n => (
+                      <div 
+                        key={n.id || n._id}
+                        className={`p-2.5 rounded-lg mb-1.5 text-xs ${
+                          n.is_read ? 'bg-[var(--bg-surface)]' : 'bg-[rgba(0,149,246,0.08)]'
+                        } border-l-2 ${n.type === 'login' ? 'border-amber-400' : 'border-[#0095F6]'}`}
+                      >
+                        <div className="font-semibold text-[var(--text-primary)]">
+                          {n.type === 'login' ? '🔑 Login Security Alert' : n.sender_name}
+                        </div>
+                        <div className="text-[var(--text-secondary)] mt-0.5">{n.message}</div>
+                        <div className="text-[0.65rem] text-[var(--text-muted)] mt-1 flex items-center gap-1">
+                          <Clock size={10} />
+                          {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </nav>
+        </div>
 
-              {/* User Profile Pill */}
+        {/* Bottom Actions: Theme Toggle, User Profile, Log Out */}
+        <div className="flex flex-col gap-2 pt-4 border-t border-[var(--border-subtle)]">
+          {/* Theme Switcher Button */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-3.5 px-3 py-2 rounded-xl text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition"
+            title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
+          >
+            {isDark ? <Sun size={19} className="text-amber-400 shrink-0" /> : <Moon size={19} className="text-indigo-500 shrink-0" />}
+            <span className="hidden lg:inline">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
+
+          {/* User Profile Card / Login Button */}
+          {user ? (
+            <div className="flex items-center justify-between p-1.5 rounded-xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)]">
               <div 
-                onClick={onOpenProfile}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.6rem',
-                  padding: '0.35rem 0.65rem',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: 'var(--radius-full)',
-                  border: '1px solid var(--border-subtle)',
-                  cursor: 'pointer'
-                }}
+                onClick={() => navigate(`/profile/${user.username}`)}
+                className="flex items-center gap-2 cursor-pointer overflow-hidden flex-1"
               >
                 <img
                   src={user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}`}
                   alt={user.username}
-                  style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#1e293b' }}
+                  className="w-8 h-8 rounded-full shrink-0 object-cover"
                 />
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user.username}</span>
-                {isAdmin ? (
-                  <span className="badge badge-admin" style={{ fontSize: '0.6rem' }}>Admin</span>
-                ) : (
-                  <span className="badge badge-primary" style={{ fontSize: '0.6rem' }}>User</span>
-                )}
+                <div className="hidden lg:flex flex-col min-w-0">
+                  <span className="text-xs font-semibold truncate text-[var(--text-primary)]">{user.username}</span>
+                  <span className="text-[0.65rem] text-[var(--text-secondary)] capitalize">{user.role || 'Member'}</span>
+                </div>
               </div>
-
-              {/* Logout Button */}
-              <button 
-                onClick={logout} 
-                className="btn btn-secondary" 
-                style={{ padding: '0.55rem', borderRadius: '50%' }}
+              <button
+                onClick={async () => {
+                  await logout();
+                  navigate('/login', { replace: true });
+                }}
+                className="p-1.5 text-[var(--text-secondary)] hover:text-rose-500 rounded-lg transition"
                 title="Log Out"
               >
                 <LogOut size={16} />
               </button>
-            </>
+            </div>
           ) : (
-            <button onClick={onOpenAuth} className="btn btn-primary">
-              <User size={16} />
-              <span>Sign In / Register</span>
+            <button
+              onClick={() => navigate('/login')}
+              className="btn btn-primary w-full text-xs py-2"
+            >
+              <User size={15} />
+              <span className="hidden lg:inline">Sign In</span>
             </button>
           )}
         </div>
-      </div>
-    </header>
+      </aside>
+
+      {/* ======================================================== */}
+      {/* MOBILE TOP BAR (< 768px)                                  */}
+      {/* ======================================================== */}
+      <header className="md:hidden sticky top-0 z-40 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] px-4 py-2.5 flex items-center justify-between">
+        <div 
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 cursor-pointer"
+        >
+          <div className="w-8 h-8 rounded-lg bg-[var(--instagram-gradient)] flex items-center justify-center">
+            <Sparkles size={17} color="#ffffff" />
+          </div>
+          <span className="font-display font-extrabold text-lg tracking-tight text-[var(--text-primary)]">Aura</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]"
+            title="Toggle Theme"
+          >
+            {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-indigo-500" />}
+          </button>
+
+          {/* Notifications */}
+          {user && (
+            <button
+              onClick={() => navigate('/notifications')}
+              className="p-2 rounded-full relative text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]"
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 bg-[#f43f5e] text-white text-[0.55rem] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* Messages */}
+          {user && (
+            <button
+              onClick={() => navigate('/messages')}
+              className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]"
+            >
+              <MessageSquare size={18} />
+            </button>
+          )}
+
+          {/* Logout if on mobile */}
+          {user && (
+            <button
+              onClick={async () => {
+                await logout();
+                navigate('/login', { replace: true });
+              }}
+              className="p-2 rounded-full text-[var(--text-secondary)] hover:text-rose-500"
+              title="Log Out"
+            >
+              <LogOut size={16} />
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* ======================================================== */}
+      {/* MOBILE BOTTOM NAVIGATION BAR (< 768px, Instagram Style)   */}
+      {/* ======================================================== */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] px-2 py-2 flex items-center justify-around select-none">
+        <button
+          onClick={() => navigate('/home')}
+          className={`p-2 rounded-xl flex flex-col items-center gap-0.5 ${
+            activePath === '/home' || activePath === '/' ? 'text-[#0095F6]' : 'text-[var(--text-secondary)]'
+          }`}
+        >
+          <Home size={22} />
+        </button>
+
+        <button
+          onClick={() => navigate('/explore')}
+          className={`p-2 rounded-xl flex flex-col items-center gap-0.5 ${
+            activePath === '/explore' ? 'text-[#0095F6]' : 'text-[var(--text-secondary)]'
+          }`}
+        >
+          <Compass size={22} />
+        </button>
+
+        <button
+          onClick={() => navigate('/assistant')}
+          className={`p-2 rounded-xl flex flex-col items-center gap-0.5 ${
+            activePath === '/assistant' ? 'text-emerald-500' : 'text-[var(--text-secondary)]'
+          }`}
+          title="Aura AI"
+        >
+          <Bot size={22} />
+        </button>
+
+        <button
+          onClick={() => navigate('/reels')}
+          className={`p-2 rounded-xl flex flex-col items-center gap-0.5 ${
+            activePath === '/reels' ? 'text-[#0095F6]' : 'text-[var(--text-secondary)]'
+          }`}
+        >
+          <Film size={22} />
+        </button>
+
+        <button
+          onClick={() => navigate(user ? `/profile/${user.username}` : '/login')}
+          className={`p-1.5 rounded-full flex flex-col items-center ${
+            activePath.startsWith('/profile') ? 'ring-2 ring-[#0095F6]' : ''
+          }`}
+        >
+          {user ? (
+            <img
+              src={user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}`}
+              alt={user.username}
+              className="w-6 h-6 rounded-full object-cover"
+            />
+          ) : (
+            <User size={22} className="text-[var(--text-secondary)]" />
+          )}
+        </button>
+      </nav>
+    </>
   );
 };
+export default Navbar;

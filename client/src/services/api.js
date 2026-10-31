@@ -33,9 +33,11 @@ export const api = {
     login: (credentials) => request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
     register: (userData) => request('/auth/register', { method: 'POST', body: JSON.stringify(userData) }),
     verifyEmail: (data) => request('/auth/verify-email', { method: 'POST', body: JSON.stringify(data) }),
+    resendOtp: (data) => request('/auth/resend-otp', { method: 'POST', body: JSON.stringify(data) }),
     forgotPassword: (data) => request('/auth/forgot-password', { method: 'POST', body: JSON.stringify(data) }),
     resetPassword: (data) => request('/auth/reset-password', { method: 'POST', body: JSON.stringify(data) }),
     getMe: () => request('/auth/me'),
+    logout: () => request('/auth/logout', { method: 'POST' }).catch(() => ({})),
   },
 
   posts: {
