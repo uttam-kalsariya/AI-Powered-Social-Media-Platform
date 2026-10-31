@@ -10,6 +10,7 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)
     
     MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/ai_social_media')
+    MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'ai_social_media')
     
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
     
