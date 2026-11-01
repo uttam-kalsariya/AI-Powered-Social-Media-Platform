@@ -152,16 +152,18 @@ def test_email_verification_token_hashing(setup_test_db):
     user_res = db.users.insert_one({"username": "verify_me", "email": "verify@test.local", "email_verified": False})
     user_id = str(user_res.inserted_id)
     
-    plain_code = create_email_verification_token(user_id)
+    ok, plain_code, _ = create_email_verification_token(user_id)
+    assert ok is True
     assert len(plain_code) == 6
     
-    # Verify plain code is not in DB
-    record = db.verification_tokens.find_one({"token_hash": hash_token(plain_code)})
+    # Verify plain code is not in DB and HMAC hash is stored
+    from app.utils.security import hash_otp
+    record = db.verification_tokens.find_one({"token_hash": hash_otp(plain_code)})
     assert record is not None
     assert record["used"] is False
     
     # Verify code
-    is_valid, verified_uid, err = verify_email_token(plain_code)
+    is_valid, verified_uid, err = verify_email_token(plain_code, user_id=user_id)
     assert is_valid is True
     assert verified_uid == user_id
     

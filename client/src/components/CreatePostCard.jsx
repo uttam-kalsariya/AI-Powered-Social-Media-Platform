@@ -101,7 +101,12 @@ export const CreatePostCard = ({ onPostCreated, onOpenAuth }) => {
       if (res.moderation_notice) {
         setModerationNotice(res.moderation_notice);
       }
-      if (onPostCreated) onPostCreated(res.post);
+      if (onPostCreated) {
+        onPostCreated({
+          ...(res.post || {}),
+          streak_info: res.streak_info
+        });
+      }
     } catch (err) {
       setError(err.message || 'Failed to publish post');
     } finally {

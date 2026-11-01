@@ -182,6 +182,14 @@ def login():
     now = datetime.now(timezone.utc)
     db.users.update_one({"_id": user['_id']}, {"$set": {"last_login": now}})
     
+    # Record daily login streak activity
+    streak_result = None
+    try:
+        from app.services.streak_service import record_activity
+        streak_result = record_activity(str(user['_id']), 'login')
+    except Exception as e:
+        pass
+    
     # Requirement 3: Admin persona receives notification whenever a user successfully logs in
     admin_notif = {
         "recipient_role": "admin",
@@ -216,11 +224,19 @@ def login():
     user_data = serialize_doc(user)
     user_data.pop('password_hash', None)
     
-    return jsonify({
+    res_payload = {
         "message": "Login successful",
         "token": access_token,
         "user": user_data
-    }), 200
+    }
+    if streak_result:
+        res_payload["streak_info"] = {
+            "current_streak": streak_result.get("current_streak", 0),
+            "xp_gained": streak_result.get("xp_gained", 0),
+            "streak_increased": streak_result.get("streak_increased", False),
+            "new_badges": streak_result.get("new_badges", [])
+        }
+    return jsonify(res_payload), 200
 
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()

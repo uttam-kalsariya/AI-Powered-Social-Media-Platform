@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
+import { StreakModal } from './StreakModal';
 import { 
   Sparkles, 
   ShieldCheck, 
@@ -20,7 +21,8 @@ import {
   Sun,
   Moon,
   PlusSquare,
-  Settings
+  Settings,
+  Flame
 } from 'lucide-react';
 
 export const Navbar = () => {
@@ -32,6 +34,8 @@ export const Navbar = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [streakCount, setStreakCount] = useState(0);
+  const [showStreakModal, setShowStreakModal] = useState(false);
 
   const activePath = location.pathname;
 
@@ -46,9 +50,22 @@ export const Navbar = () => {
     }
   };
 
+  const fetchStreak = async () => {
+    if (!user) return;
+    try {
+      const res = await api.streaks.getMyStreak();
+      if (res && res.streak) {
+        setStreakCount(res.streak.current_streak || 0);
+      }
+    } catch (e) {
+      if (user.current_streak) setStreakCount(user.current_streak);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchNotifications();
+      fetchStreak();
       const interval = setInterval(fetchNotifications, 12000);
       return () => clearInterval(interval);
     }
@@ -122,6 +139,20 @@ export const Navbar = () => {
                 </button>
               );
             })}
+
+            {/* Streak Counter Trigger in Sidebar */}
+            {user && (
+              <button
+                onClick={() => setShowStreakModal(true)}
+                className="flex items-center gap-3.5 px-3 py-2.5 rounded-xl font-medium text-sm transition text-left w-full text-amber-500 hover:bg-[rgba(245,158,11,0.1)] group"
+                title={`Daily Streak: ${streakCount} Days. Click for rewards & calendar`}
+              >
+                <div className="w-5 h-5 rounded-md bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                  <Flame size={13} className={streakCount > 0 ? 'animate-pulse' : ''} />
+                </div>
+                <span className="hidden lg:inline font-bold">{streakCount}d Streak</span>
+              </button>
+            )}
 
             {/* Notifications Trigger in Sidebar */}
             <div className="relative">
@@ -253,6 +284,18 @@ export const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Mobile Streak Flame Pill */}
+          {user && (
+            <button
+              onClick={() => setShowStreakModal(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[rgba(245,158,11,0.12)] border border-[rgba(245,158,11,0.25)] text-amber-500 text-xs font-bold active:scale-95 transition"
+              title="View Daily Streaks"
+            >
+              <Flame size={14} className="fill-amber-500 text-amber-500" />
+              <span>{streakCount}</span>
+            </button>
+          )}
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -361,6 +404,12 @@ export const Navbar = () => {
           )}
         </button>
       </nav>
+
+      {/* Streak Details & Visual Calendar Modal */}
+      <StreakModal 
+        isOpen={showStreakModal} 
+        onClose={() => setShowStreakModal(false)} 
+      />
     </>
   );
 };
