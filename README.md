@@ -131,6 +131,52 @@ AI-Powered-Social-Media-Platform/
 
 ---
 
+## 🔥 Upcoming Features (Roadmap)
+
+The following features are planned for future releases to make the platform more engaging, intelligent, and production-ready.
+
+### 🏆 Streak Counter
+- Daily login streak tracking
+- Post creation streaks
+- Comment activity streaks
+- Weekly engagement milestones
+- Achievement rewards for maintaining streaks
+- Visual streak calendar
+- XP points and badge rewards
+
+### 🌍 Social Features
+- 🔥 Trending Topics
+- #️⃣ Trending Hashtags
+- 📍 Nearby Users
+- 🌎 Explore Page
+- 🎯 Personalized Recommendations
+- 💾 Saved Posts
+- 📂 Collections
+- 🔖 Bookmarks
+
+### 🚀 Future AI Features
+- AI Smart Feed Recommendations
+- AI Trending Topic Detection
+- AI Auto Hashtag Generator
+- AI Content Moderation
+- AI Smart Search
+- AI Engagement Analytics
+- AI Profile Insights
+
+### 📱 Planned Enhancements
+- Real-Time Notifications
+- WebSocket Support
+- Infinite Scrolling Feed
+- Dark & Light Mode
+- Mobile PWA Support
+- Story Feature
+- Follow / Unfollow Users
+- Real-Time Chat
+- User Verification
+- Admin Analytics Dashboard
+
+---
+
 ## ⚡ Instant Demo Accounts
 
 For immediate evaluation, use the 1-click demo buttons in the Sign In modal or enter:
