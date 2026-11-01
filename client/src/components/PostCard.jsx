@@ -12,7 +12,10 @@ import {
   FileText,
   Clock,
   Check,
-  CheckCircle2
+  CheckCircle2,
+  Bookmark,
+  UserPlus,
+  UserCheck
 } from 'lucide-react';
 
 export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => {
@@ -23,6 +26,13 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
   );
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [likeLoading, setLikeLoading] = useState(false);
+
+  // Social suite: Bookmarks & Follows
+  const [isSaved, setIsSaved] = useState(post.is_saved || false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveToast, setSaveToast] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(post.is_author_followed || false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   // Comments state
   const [showComments, setShowComments] = useState(false);
@@ -61,6 +71,48 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
       console.error(e);
     } finally {
       setLikeLoading(false);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    if (!user) {
+      onOpenAuth();
+      return;
+    }
+    if (saveLoading) return;
+    setSaveLoading(true);
+    try {
+      const res = await api.posts.toggleSave(post.id || post._id);
+      setIsSaved(res.saved);
+      setSaveToast(res.message || (res.saved ? "Saved to Bookmarks" : "Removed from Bookmarks"));
+      setTimeout(() => setSaveToast(null), 3000);
+      if (onPostUpdated) {
+        onPostUpdated({ ...post, is_saved: res.saved });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleToggleFollow = async () => {
+    if (!user) {
+      onOpenAuth();
+      return;
+    }
+    if (followLoading || !post.author_id) return;
+    setFollowLoading(true);
+    try {
+      const res = await api.users.toggleFollow(post.author_id);
+      setIsFollowing(res.is_following);
+      if (onPostUpdated) {
+        onPostUpdated({ ...post, is_author_followed: res.is_following });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -215,10 +267,39 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
             style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#1e293b' }}
           />
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
               <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{post.author_name}</span>
               {post.author_name === 'admin' && (
                 <span className="badge badge-admin" style={{ fontSize: '0.6rem', padding: '0.1rem 0.35rem' }}>Admin</span>
+              )}
+              {user && !isAuthor && (
+                <button
+                  onClick={handleToggleFollow}
+                  disabled={followLoading}
+                  className={`btn ${isFollowing ? 'btn-secondary' : 'btn-primary'}`}
+                  style={{
+                    fontSize: '0.68rem',
+                    padding: '0.15rem 0.55rem',
+                    borderRadius: 'var(--radius-full)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    marginLeft: '0.35rem'
+                  }}
+                  title={isFollowing ? "Unfollow this creator" : "Follow this creator"}
+                >
+                  {isFollowing ? (
+                    <>
+                      <UserCheck size={11} />
+                      <span>Following</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus size={11} />
+                      <span>Follow</span>
+                    </>
+                  )}
+                </button>
               )}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -379,6 +460,27 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
             <MessageSquare size={18} />
             <span>{commentsCount}</span>
           </button>
+
+          {/* Bookmark / Save Post */}
+          <button
+            onClick={handleToggleSave}
+            disabled={saveLoading}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: isSaved ? '#f59e0b' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontWeight: 600,
+              transition: 'color var(--transition-fast)'
+            }}
+            title={isSaved ? "Saved to Bookmarks" : "Save to Bookmarks"}
+          >
+            <Bookmark size={18} fill={isSaved ? '#f59e0b' : 'none'} />
+            <span style={{ fontSize: '0.8rem' }}>{isSaved ? 'Saved' : 'Save'}</span>
+          </button>
         </div>
 
         {/* AI Summarize Button */}
@@ -394,19 +496,39 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
         </button>
       </div>
 
+      {/* Save Notification Toast Banner */}
+      {saveToast && (
+        <div style={{
+          marginTop: '0.65rem',
+          padding: '0.45rem 0.85rem',
+          borderRadius: '8px',
+          background: 'rgba(245, 158, 11, 0.12)',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          color: '#fbbf24',
+          fontSize: '0.8rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.45rem'
+        }}>
+          <Bookmark size={13} fill="#fbbf24" />
+          <span>{saveToast}</span>
+        </div>
+      )}
+
       {/* Comments Drawer */}
       {showComments && (
         <div style={{
           marginTop: '1rem',
           paddingTop: '1rem',
           borderTop: '1px solid var(--border-subtle)',
+          animation: 'fadeIn 0.2s ease'
         }}>
-          {/* AI Smart Replies Suggestions */}
+          {/* Smart Replies Prompt */}
           <div style={{ marginBottom: '0.85rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                 <Sparkles size={12} color="var(--accent-cyan)" />
-                AI Smart Replies:
+                Suggested Smart Replies:
               </span>
               {smartReplies.length === 0 && (
                 <button
@@ -417,11 +539,12 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
                     background: 'none',
                     border: 'none',
                     color: 'var(--accent-cyan)',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer'
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
                   }}
                 >
-                  {loadingReplies ? 'Generating...' : 'Get Suggestions'}
+                  {loadingReplies ? 'Generating ideas...' : 'Generate Replies'}
                 </button>
               )}
             </div>
@@ -544,3 +667,4 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
     </article>
   );
 };
+export default PostCard;

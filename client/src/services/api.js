@@ -45,6 +45,17 @@ export const api = {
       const query = new URLSearchParams(params).toString();
       return request(`/posts${query ? `?${query}` : ''}`);
     },
+    getExplore: (params = {}) => {
+      const query = new URLSearchParams(params).toString();
+      return request(`/posts/explore${query ? `?${query}` : ''}`);
+    },
+    getTrendingHashtags: (limit = 10) => request(`/posts/trending/hashtags?limit=${limit}`),
+    getSavedPosts: (collectionName = '') => request(`/posts/saved${collectionName ? `?collection=${encodeURIComponent(collectionName)}` : ''}`),
+    getSavedCollections: () => request('/posts/saved/collections'),
+    toggleSave: (id, collectionName = 'All Saved') => request(`/posts/${id}/save`, { 
+      method: 'POST', 
+      body: JSON.stringify({ collection_name: collectionName }) 
+    }),
     getPost: (id) => request(`/posts/${id}`),
     createPost: (postData) => request('/posts', { method: 'POST', body: JSON.stringify(postData) }),
     updatePost: (id, postData) => request(`/posts/${id}`, { method: 'PUT', body: JSON.stringify(postData) }),
@@ -62,6 +73,7 @@ export const api = {
     getSmartReplies: (content) => request('/ai/smart-replies', { method: 'POST', body: JSON.stringify({ content }) }),
     moderate: (content) => request('/ai/moderate', { method: 'POST', body: JSON.stringify({ content }) }),
     chat: (messages) => request('/ai/chat', { method: 'POST', body: JSON.stringify({ messages }) }),
+    getTrendingTopics: () => request('/ai/trending-topics'),
   },
 
   admin: {
@@ -81,5 +93,17 @@ export const api = {
   users: {
     getProfile: (userIdOrUsername) => request(`/users/${userIdOrUsername}`),
     updateProfile: (profileData) => request('/users/profile', { method: 'PUT', body: JSON.stringify(profileData) }),
+    toggleFollow: (userId) => request(`/users/${userId}/follow`, { method: 'POST' }),
+    getFollowers: (userId) => request(`/users/${userId}/followers`),
+    getFollowing: (userId) => request(`/users/${userId}/following`),
+    getSuggested: () => request('/users/suggested'),
+  },
+
+  streaks: {
+    getMyStreak: () => request('/streaks/me'),
+    claimCheckin: () => request('/streaks/checkin', { method: 'POST' }),
+    getLeaderboard: (limit = 10) => request(`/streaks/leaderboard?limit=${limit}`),
+    getBadges: () => request('/streaks/badges'),
+    getUserStreak: (username) => request(`/streaks/user/${username}`),
   }
 };

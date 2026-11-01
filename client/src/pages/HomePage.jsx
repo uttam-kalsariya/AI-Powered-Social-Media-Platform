@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CreatePostCard } from '../components/CreatePostCard';
 import { PostCard } from '../components/PostCard';
+import { StreakWidget } from '../components/StreakWidget';
+import { StreakModal } from '../components/StreakModal';
 import { api } from '../services/api';
 import { 
   Sparkles, 
@@ -11,21 +13,42 @@ import {
   Zap, 
   Bot,
   User,
-  ShieldCheck
+  ShieldCheck,
+  Flame,
+  Compass,
+  Hash,
+  TrendingUp,
+  UserPlus,
+  UserCheck
 } from 'lucide-react';
 
 export const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [feedTab, setFeedTab] = useState('for_you'); // 'for_you' | 'following'
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [selectedTag, setSelectedTag] = useState('');
+  const [showStreakModal, setShowStreakModal] = useState(false);
+  const [streakToast, setStreakToast] = useState(null);
 
-  const fetchPosts = async (tag = '') => {
+  // Dynamic social sidebar data
+  const [suggestedCreators, setSuggestedCreators] = useState([]);
+  const [loadingSuggested, setLoadingSuggested] = useState(false);
+  const [trendingHashtags, setTrendingHashtags] = useState([]);
+
+  const fetchPosts = async (tab = feedTab, tag = selectedTag) => {
     setLoadingPosts(true);
     try {
-      const res = await api.posts.getFeed(tag ? { tag } : {});
+      const params = {};
+      if (tab === 'following') {
+        params.filter = 'following';
+      }
+      if (tag) {
+        params.tag = tag;
+      }
+      const res = await api.posts.getFeed(params);
       setPosts(res.posts || []);
     } catch (e) {
       console.error("Error fetching feed:", e);
@@ -34,12 +57,41 @@ export const HomePage = () => {
     }
   };
 
+  const fetchSocialWidgets = async () => {
+    try {
+      setLoadingSuggested(true);
+      const [creatorsRes, tagsRes] = await Promise.allSettled([
+        api.users.getSuggested(),
+        api.posts.getTrendingHashtags(8)
+      ]);
+      if (creatorsRes.status === 'fulfilled') {
+        setSuggestedCreators(creatorsRes.value.creators || []);
+      }
+      if (tagsRes.status === 'fulfilled') {
+        setTrendingHashtags(tagsRes.value.hashtags || []);
+      }
+    } catch (err) {
+      console.error("Error loading social sidebar:", err);
+    } finally {
+      setLoadingSuggested(false);
+    }
+  };
+
   useEffect(() => {
-    fetchPosts(selectedTag);
-  }, [selectedTag]);
+    fetchPosts(feedTab, selectedTag);
+  }, [feedTab, selectedTag]);
+
+  useEffect(() => {
+    fetchSocialWidgets();
+  }, []);
 
   const handlePostCreated = (newPost) => {
     setPosts(prev => [newPost, ...prev]);
+    if (newPost.streak_info && newPost.streak_info.xp_gained) {
+      const msg = `🔥 +${newPost.streak_info.xp_gained} XP earned! Current streak: ${newPost.streak_info.current_streak} days.`;
+      setStreakToast(msg);
+      setTimeout(() => setStreakToast(null), 5000);
+    }
   };
 
   const handlePostDeleted = (postId) => {
@@ -50,14 +102,66 @@ export const HomePage = () => {
     setPosts(prev => prev.map(p => ((p.id === updatedPost.id || p._id === updatedPost.id || p.id === updatedPost._id) ? updatedPost : p)));
   };
 
+  const handleToggleFollowCreator = async (creatorId) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    try {
+      const res = await api.users.toggleFollow(creatorId);
+      setSuggestedCreators(prev => prev.map(c => {
+        if (c.id === creatorId || c._id === creatorId) {
+          return {
+            ...c,
+            is_following: res.is_following,
+            followers_count: (c.followers_count || 0) + (res.is_following ? 1 : -1)
+          };
+        }
+        return c;
+      }));
+      // If we are on the following tab, refresh feed to reflect newly followed creators
+      if (feedTab === 'following') {
+        fetchPosts('following', selectedTag);
+      }
+    } catch (err) {
+      console.error("Error toggling follow:", err);
+    }
+  };
+
   return (
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'minmax(0, 1fr) 320px',
       gap: '1.5rem',
-      alignItems: 'start'
+      alignItems: 'start',
+      position: 'relative'
     }}>
-      {/* Left Column: Feed */}
+      {/* Floating Gamification Toast Notification */}
+      {streakToast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '24px',
+          zIndex: 9999,
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(239, 68, 68, 0.95))',
+          color: '#ffffff',
+          padding: '0.75rem 1.25rem',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px rgba(245, 158, 11, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.6rem',
+          fontSize: '0.85rem',
+          fontWeight: 600,
+          backdropFilter: 'blur(8px)',
+          animation: 'bounce 0.5s ease'
+        }}>
+          <Flame size={18} />
+          <span>{streakToast}</span>
+        </div>
+      )}
+
+      {/* Left Column: Main Feed */}
       <div>
         {/* Creator Card */}
         <CreatePostCard
@@ -65,74 +169,161 @@ export const HomePage = () => {
           onOpenAuth={() => navigate('/login')}
         />
 
-        {/* Tag filters & refresh bar */}
+        {/* Feed Switcher Tabs: For You vs Following */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '1rem',
-          flexWrap: 'wrap',
-          gap: '0.5rem'
+          borderBottom: '1px solid var(--border-subtle)',
+          paddingBottom: '0.5rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button
-              onClick={() => setSelectedTag('')}
-              className={`btn ${selectedTag === '' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
+              onClick={() => { setFeedTab('for_you'); setSelectedTag(''); }}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                color: feedTab === 'for_you' ? 'var(--primary)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                paddingBottom: '0.4rem',
+                borderBottom: feedTab === 'for_you' ? '2px solid var(--primary)' : '2px solid transparent',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem'
+              }}
             >
-              🔥 All Posts
+              <Compass size={16} />
+              <span>For You</span>
             </button>
-            {['ai', 'innovation', 'technology', 'creativity'].map(t => (
-              <button
-                key={t}
-                onClick={() => setSelectedTag(selectedTag === t ? '' : t)}
-                className={`btn ${selectedTag === t ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
-              >
-                #{t}
-              </button>
-            ))}
+
+            <button
+              onClick={() => {
+                if (!user) {
+                  navigate('/login');
+                  return;
+                }
+                setFeedTab('following');
+                setSelectedTag('');
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                color: feedTab === 'following' ? 'var(--primary)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                paddingBottom: '0.4rem',
+                borderBottom: feedTab === 'following' ? '2px solid var(--primary)' : '2px solid transparent',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem'
+              }}
+            >
+              <Users size={16} />
+              <span>Following</span>
+            </button>
           </div>
 
           <button
-            onClick={() => fetchPosts(selectedTag)}
+            onClick={() => fetchPosts(feedTab, selectedTag)}
             className="btn btn-secondary"
-            style={{ fontSize: '0.75rem', padding: '0.35rem 0.65rem' }}
             title="Refresh Feed"
+            style={{ padding: '0.35rem 0.65rem' }}
           >
-            <RefreshCw size={13} className={loadingPosts ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={loadingPosts ? 'animate-spin' : ''} />
           </button>
         </div>
 
-        {/* Feed Posts */}
+        {/* Tag Filters */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          marginBottom: '1.25rem',
+          overflowX: 'auto',
+          paddingBottom: '0.2rem'
+        }}>
+          <button
+            onClick={() => setSelectedTag('')}
+            className={`btn ${selectedTag === '' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)' }}
+          >
+            All Topics
+          </button>
+          {(trendingHashtags.length > 0 ? trendingHashtags.slice(0, 5).map(h => h.tag) : ['ai', 'innovation', 'creativity', 'buildinpublic', 'tech']).map(tag => (
+            <button
+              key={tag}
+              onClick={() => setSelectedTag(tag === selectedTag ? '' : tag)}
+              className={`btn ${selectedTag === tag ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)' }}
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+
+        {/* Posts Stream */}
         {loadingPosts ? (
-          <div className="glass-panel" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem', color: 'var(--primary)' }} />
-            <div>Loading posts...</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} className="glass-panel" style={{ padding: '1.5rem', minHeight: '160px' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--border-subtle)', animation: 'pulse 1.5s infinite' }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ width: '120px', height: '14px', background: 'var(--border-subtle)', borderRadius: '4px', marginBottom: '6px' }} />
+                    <div style={{ width: '80px', height: '10px', background: 'var(--border-subtle)', borderRadius: '4px' }} />
+                  </div>
+                </div>
+                <div style={{ width: '100%', height: '16px', background: 'var(--border-subtle)', borderRadius: '4px', marginBottom: '8px' }} />
+                <div style={{ width: '70%', height: '16px', background: 'var(--border-subtle)', borderRadius: '4px' }} />
+              </div>
+            ))}
           </div>
         ) : posts.length === 0 ? (
-          <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center' }}>
-            <Sparkles size={32} color="var(--accent-cyan)" style={{ marginBottom: '0.75rem' }} />
-            <h3>No posts yet</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-              Be the first to share an update or use AI to draft a post!
+          <div className="glass-panel" style={{ padding: '3.5rem 1.5rem', textAlign: 'center' }}>
+            <Sparkles size={36} color="var(--primary)" style={{ margin: '0 auto 1rem' }} />
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              {feedTab === 'following' ? "No posts from followed creators yet" : "No posts found"}
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '380px', margin: '0 auto 1.25rem' }}>
+              {feedTab === 'following'
+                ? "Follow inspiring creators from the right sidebar or explore trending posts on the Explore page!"
+                : selectedTag
+                  ? `No community posts tagged #${selectedTag} yet.`
+                  : 'Be the first to share an inspiring thought with the Aura community!'}
             </p>
+            {feedTab === 'following' && (
+              <button
+                onClick={() => setFeedTab('for_you')}
+                className="btn btn-primary"
+                style={{ fontSize: '0.82rem', padding: '0.45rem 1rem' }}
+              >
+                Switch to For You Feed
+              </button>
+            )}
           </div>
         ) : (
-          posts.map(post => (
-            <PostCard
-              key={post.id || post._id}
-              post={post}
-              onPostDeleted={handlePostDeleted}
-              onPostUpdated={handlePostUpdated}
-              onOpenAuth={() => navigate('/login')}
-            />
-          ))
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {posts.map(post => (
+              <PostCard
+                key={post.id || post._id}
+                post={post}
+                onPostDeleted={handlePostDeleted}
+                onPostUpdated={handlePostUpdated}
+                onOpenAuth={() => navigate('/login')}
+              />
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Right Column: AI Insights & Platform Info */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Right Column: Dynamic Social Widgets */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'sticky', top: '1.5rem' }}>
         {/* User Card */}
         {user && (
           <div className="glass-panel" style={{ padding: '1.25rem' }}>
@@ -164,32 +355,154 @@ export const HomePage = () => {
           </div>
         )}
 
+        {/* Daily Streak & Gamification Widget */}
+        <StreakWidget 
+          onOpenModal={() => setShowStreakModal(true)} 
+        />
+
+        {/* Dynamic Trending Hashtags Widget */}
+        <div className="glass-panel" style={{ padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <TrendingUp size={17} color="var(--primary)" />
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Trending Hashtags</h3>
+            </div>
+            <button
+              onClick={() => navigate('/explore')}
+              style={{ background: 'none', border: 'none', fontSize: '0.75rem', color: 'var(--accent-cyan)', cursor: 'pointer' }}
+            >
+              Explore
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+            {trendingHashtags.length === 0 ? (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Discovering trending hashtags...
+              </div>
+            ) : (
+              trendingHashtags.slice(0, 6).map((item, idx) => (
+                <div
+                  key={item.tag}
+                  onClick={() => setSelectedTag(item.tag)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.4rem 0.6rem',
+                    borderRadius: '8px',
+                    background: selectedTag === item.tag ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.02)',
+                    border: selectedTag === item.tag ? '1px solid var(--primary)' : '1px solid transparent',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Hash size={13} color="var(--primary)" />
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {item.tag}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    {item.count} {item.count === 1 ? 'post' : 'posts'}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Suggested Creators Widget */}
+        <div className="glass-panel" style={{ padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Users size={17} color="var(--primary)" />
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Suggested Creators</h3>
+            </div>
+            <button
+              onClick={fetchSocialWidgets}
+              title="Refresh suggestions"
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
+              <RefreshCw size={13} className={loadingSuggested ? 'animate-spin' : ''} />
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {loadingSuggested && suggestedCreators.length === 0 ? (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>
+                Finding active creators...
+              </div>
+            ) : suggestedCreators.length === 0 ? (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>
+                You're all caught up with the community!
+              </div>
+            ) : (
+              suggestedCreators.slice(0, 5).map(creator => {
+                const cid = creator.id || creator._id;
+                return (
+                  <div key={cid} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div 
+                      onClick={() => navigate(`/profile/${creator.username}`)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', flex: 1, minWidth: 0, marginRight: '0.5rem' }}
+                    >
+                      <img
+                        src={creator.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${creator.username}`}
+                        alt={creator.username}
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#1e293b', flexShrink: 0 }}
+                      />
+                      <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                        <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {creator.display_name || creator.username}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                          @{creator.username} • {creator.followers_count || 0} followers
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFollowCreator(cid)}
+                      className={`btn ${creator.is_following ? 'btn-secondary' : 'btn-primary'}`}
+                      style={{ fontSize: '0.72rem', padding: '0.22rem 0.65rem', borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      {creator.is_following ? (
+                        <>
+                          <UserCheck size={11} />
+                          <span>Following</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus size={11} />
+                          <span>Follow</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
         {/* AI Features Spotlight */}
         <div className="glass-panel" style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <Zap size={18} color="var(--accent-amber)" />
-            <h3 style={{ fontSize: '1rem' }}>AI Social Suite</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>AI Social Suite</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
               <span style={{ color: '#10b981' }}>✓</span>
-              <span><strong>AI Post Generation</strong>: Craft rich hooks & hashtags by topic</span>
+              <span><strong>AI Post Generation</strong>: Craft rich hooks & hashtags</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
               <span style={{ color: '#6366f1' }}>✓</span>
-              <span><strong>Tone Polishers</strong>: Professional, witty, and inspirational</span>
+              <span><strong>Smart Discussion Recaps</strong>: One-click thread summaries</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
               <span style={{ color: '#06b6d4' }}>✓</span>
-              <span><strong>Discussion Summaries</strong>: 1-click thread recap & sentiments</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-              <span style={{ color: '#f59e0b' }}>✓</span>
-              <span><strong>Smart Replies</strong>: Instant contextual comment suggestions</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-              <span style={{ color: '#f43f5e' }}>✓</span>
-              <span><strong>Safety Guard</strong>: Automated toxicity & spam moderation</span>
+              <span><strong>AI Trend Radar</strong>: Gemini-powered viral topics</span>
             </div>
           </div>
 
@@ -202,52 +515,13 @@ export const HomePage = () => {
             <span>Open Aura AI Chat</span>
           </button>
         </div>
-
-        {/* Suggested Creators */}
-        <div className="glass-panel" style={{ padding: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Users size={17} color="var(--primary)" />
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 600 }}>Suggested for you</h3>
-            </div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', cursor: 'pointer' }}>See All</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {[
-              { name: 'Sarah Chen', handle: 'sarah_ai', role: 'AI Researcher', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80' },
-              { name: 'Marcus Vance', handle: 'marcus_v', role: 'Product Designer', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
-              { name: 'Elena Rostova', handle: 'elena_tech', role: 'Prompt Engineer', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80' }
-            ].map(creator => (
-              <div key={creator.handle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <img
-                    src={creator.avatar}
-                    alt={creator.name}
-                    style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
-                  />
-                  <div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>{creator.name}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>@{creator.handle}</div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-full)' }}
-                  onClick={(e) => {
-                    const btn = e.currentTarget;
-                    btn.innerText = btn.innerText === 'Follow' ? 'Following' : 'Follow';
-                    btn.classList.toggle('btn-primary');
-                    btn.classList.toggle('btn-secondary');
-                  }}
-                >
-                  Follow
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
+
+      {/* Visual Streak & Calendar Modal */}
+      <StreakModal 
+        isOpen={showStreakModal} 
+        onClose={() => setShowStreakModal(false)} 
+      />
     </div>
   );
 };
