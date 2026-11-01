@@ -1,24 +1,38 @@
 import os
 import sys
 import logging
+from typing import Optional, Dict, Any
 import certifi  # type: ignore
+import dns.resolver  # type: ignore
 from pymongo import MongoClient, ASCENDING  # type: ignore
-from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError  # type: ignore
 import mongomock  # type: ignore
 from app.config import Config
 
 logger = logging.getLogger(__name__)
+
+# Configure resilient DNS nameservers for Windows where local registry might return empty nameservers
+try:
+    _res = dns.resolver.get_default_resolver()
+    _ns_list = list(_res.nameservers) if _res.nameservers else []
+    for _ns in ('8.8.8.8', '1.1.1.1', '8.8.4.4'):
+        if _ns not in _ns_list:
+            _ns_list.append(_ns)
+    _res.nameservers = _ns_list  # type: ignore
+except Exception as _dns_e:
+    logger.debug(f"DNS resolver configuration note: {_dns_e}")
 
 _mongo_client = None
 _db_instance = None
 _is_mock_db = False
 
 def _get_shared_mock_client():
-    if not hasattr(sys, '_shared_mongo_mock') or sys._shared_mongo_mock is None:
-        sys._shared_mongo_mock = mongomock.MongoClient()
-    return sys._shared_mongo_mock
+    mock_client = getattr(sys, '_shared_mongo_mock', None)
+    if mock_client is None:
+        mock_client = mongomock.MongoClient()
+        setattr(sys, '_shared_mongo_mock', mock_client)
+    return mock_client
 
-def get_db(db_name: str = None, force_reconnect: bool = False):
+def get_db(db_name: Optional[str] = None, force_reconnect: bool = False):
     """
     Returns the active MongoDB database instance.
     - If TESTING environment is set, returns an isolated in-memory test database from a process-wide shared mock client.
@@ -59,7 +73,7 @@ def get_db(db_name: str = None, force_reconnect: bool = False):
         _is_mock_db = False
         logger.info(f"Connected to live MongoDB Atlas database '{target_db_name}' successfully.")
         ensure_indexes(_db_instance)
-    except (ConnectionFailure, ServerSelectionTimeoutError, Exception) as e:
+    except Exception as e:
         logger.warning(f"Could not connect to live MongoDB Atlas ({e}). Falling back to in-memory mongomock.")
         mock_client = _get_shared_mock_client()
         _mongo_client = mock_client
@@ -69,7 +83,7 @@ def get_db(db_name: str = None, force_reconnect: bool = False):
         
     return _db_instance
 
-def get_db_status():
+def get_db_status() -> Dict[str, Any]:
     """
     Returns connection health without exposing database credentials or passwords.
     """
@@ -115,6 +129,24 @@ def ensure_indexes(db):
         db.verification_tokens.create_index([("token_hash", ASCENDING)], name="idx_verify_token_hash")
         db.verification_tokens.create_index([("user_id", ASCENDING)], name="idx_verify_user_id")
         db.verification_tokens.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0, name="idx_verify_ttl")
+        
+        # 5. Streaks collection: unique user_id index & leaderboards
+        db.streaks.create_index([("user_id", ASCENDING)], unique=True, name="idx_streaks_user_id_unique")
+        db.streaks.create_index([("current_streak", -1)], name="idx_streaks_current_streak")
+        db.streaks.create_index([("xp", -1)], name="idx_streaks_xp")
+
+        # 6. Social Graph: Follows collection
+        db.follows.create_index([("follower_id", ASCENDING), ("followed_id", ASCENDING)], unique=True, name="idx_follows_pair")
+        db.follows.create_index([("follower_id", ASCENDING)], name="idx_follows_follower")
+        db.follows.create_index([("followed_id", ASCENDING)], name="idx_follows_followed")
+
+        # 7. Saved Posts & Bookmarks
+        db.saved_posts.create_index([("user_id", ASCENDING), ("post_id", ASCENDING)], unique=True, name="idx_saved_posts_user_post")
+        db.saved_posts.create_index([("user_id", ASCENDING), ("collection_name", ASCENDING)], name="idx_saved_posts_user_coll")
+
+        # 8. Posts discovery indexes
+        db.posts.create_index([("tags", ASCENDING)], name="idx_posts_tags")
+        db.posts.create_index([("author_id", ASCENDING)], name="idx_posts_author")
         
         logger.info("MongoDB unique and TTL indexes verified successfully.")
     except Exception as e:
