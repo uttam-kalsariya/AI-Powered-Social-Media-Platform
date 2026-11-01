@@ -128,6 +128,7 @@ def create_app():
     from app.routes.admin import admin_bp
     from app.routes.notifications import notifications_bp
     from app.routes.users import users_bp
+    from app.routes.streaks import streaks_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(posts_bp)
@@ -135,6 +136,7 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(notifications_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(streaks_bp)
     
     @app.route('/api/health', methods=['GET'])
     def health_check():

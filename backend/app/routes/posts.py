@@ -1,27 +1,130 @@
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, verify_jwt_in_request
 from app.db import get_db
 from app.models.helpers import serialize_doc, to_object_id
 from app.services.ai_service import moderate_content
+from app.services.social_service import (
+    toggle_save_post,
+    get_saved_posts,
+    get_saved_collections,
+    get_trending_hashtags,
+    get_explore_feed,
+    get_following_ids,
+    is_following
+)
 
 posts_bp = Blueprint('posts', __name__, url_prefix='/api/posts')
 
 @posts_bp.route('', methods=['GET'])
 def get_feed():
-    """Retrieve social media feed with author details, like counts, and comments count."""
+    """
+    Retrieve social media feed with author details, like counts, and comments count.
+    Supports ?tag=... , ?author_id=... , and ?filter=following (custom feed for followed creators).
+    """
     db = get_db()
     tag = request.args.get('tag')
     author_id = request.args.get('author_id')
+    feed_filter = request.args.get('filter')
     
+    current_user_id = None
+    try:
+        verify_jwt_in_request(optional=True)
+        current_user_id = get_jwt_identity()
+    except Exception:
+        pass
+
     query = {}
     if tag:
-        query['tags'] = tag.lower()
+        query['tags'] = tag.lower().replace('#', '').strip()
     if author_id:
         query['author_id'] = author_id
-        
+
+    # Filter: Following (posts only from followed creators)
+    if feed_filter == 'following':
+        if not current_user_id:
+            return jsonify({"posts": [], "message": "Sign in to view your following feed"}), 200
+        following_ids = get_following_ids(current_user_id)
+        # Include current user's own posts and followed creators
+        allowed_authors = list(set(following_ids + [str(current_user_id)]))
+        query['author_id'] = {"$in": allowed_authors}
+
     posts = list(db.posts.find(query).sort('created_at', -1).limit(50))
-    return jsonify({"posts": serialize_doc(posts)}), 200
+    
+    # Enrich with is_saved & is_author_followed
+    saved_set = set()
+    following_set = set()
+    if current_user_id:
+        saved_cursor = db.saved_posts.find({"user_id": str(current_user_id)})
+        saved_set = {r["post_id"] for r in saved_cursor}
+        following_set = set(get_following_ids(current_user_id))
+
+    enriched = []
+    for p in posts:
+        pid = str(p["_id"])
+        item = serialize_doc(p)
+        item["is_saved"] = pid in saved_set
+        item["is_author_followed"] = p.get("author_id") in following_set
+        enriched.append(item)
+
+    return jsonify({"posts": enriched}), 200
+
+@posts_bp.route('/explore', methods=['GET'])
+def explore():
+    """
+    Discovery hub endpoint: returns trending posts, hashtag analytics, and suggested creators.
+    Supports ?q=... (search query) and ?tag=...
+    """
+    current_user_id = None
+    try:
+        verify_jwt_in_request(optional=True)
+        current_user_id = get_jwt_identity()
+    except Exception:
+        pass
+
+    query = request.args.get('q')
+    tag = request.args.get('tag')
+    limit = min(60, max(1, int(request.args.get('limit', 30))))
+
+    data = get_explore_feed(current_user_id, query=query, tag=tag, limit=limit)
+    return jsonify(data), 200
+
+@posts_bp.route('/trending/hashtags', methods=['GET'])
+def trending_tags():
+    """Retrieves real-time trending hashtags aggregated across all community posts."""
+    limit = min(50, max(1, int(request.args.get('limit', 10))))
+    hashtags = get_trending_hashtags(limit=limit)
+    return jsonify({"hashtags": hashtags}), 200
+
+@posts_bp.route('/saved', methods=['GET'])
+@jwt_required()
+def list_saved():
+    """Returns posts bookmarked by the authenticated user."""
+    user_id = get_jwt_identity()
+    collection_name = request.args.get('collection')
+    posts = get_saved_posts(user_id, collection_name=collection_name)
+    return jsonify({"posts": posts, "count": len(posts)}), 200
+
+@posts_bp.route('/saved/collections', methods=['GET'])
+@jwt_required()
+def list_collections():
+    """Returns all collection folders and bookmark counts for the user."""
+    user_id = get_jwt_identity()
+    collections = get_saved_collections(user_id)
+    return jsonify({"collections": collections}), 200
+
+@posts_bp.route('/<post_id>/save', methods=['POST'])
+@jwt_required()
+def toggle_save(post_id):
+    """Toggles bookmarking/saving a post into a collection."""
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    collection_name = data.get('collection_name', 'All Saved')
+    try:
+        result = toggle_save_post(user_id, post_id, collection_name=collection_name)
+        return jsonify(result), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
 
 @posts_bp.route('/<post_id>', methods=['GET'])
 def get_post(post_id):
@@ -31,8 +134,21 @@ def get_post(post_id):
         return jsonify({"error": "Post not found"}), 404
         
     comments = list(db.comments.find({"post_id": post_id}).sort('created_at', 1))
+    
+    current_user_id = None
+    try:
+        verify_jwt_in_request(optional=True)
+        current_user_id = get_jwt_identity()
+    except Exception:
+        pass
+
+    post_data = serialize_doc(post)
+    if current_user_id:
+        post_data["is_saved"] = db.saved_posts.count_documents({"user_id": str(current_user_id), "post_id": post_id}) > 0
+        post_data["is_author_followed"] = is_following(current_user_id, post.get("author_id", ""))
+
     return jsonify({
-        "post": serialize_doc(post),
+        "post": post_data,
         "comments": serialize_doc(comments)
     }), 200
 
@@ -65,7 +181,7 @@ def create_post():
         "content": content,
         "image_url": image_url or None,
         "tags": [t.lower().strip('# ') for t in tags if t.strip()],
-        "likes": [],  # List of user IDs who liked
+        "likes": [],
         "likes_count": 0,
         "comments_count": 0,
         "is_flagged": moderation.get('flagged', False),
@@ -78,11 +194,27 @@ def create_post():
     result = db.posts.insert_one(post_doc)
     post_doc['_id'] = result.inserted_id
     
-    return jsonify({
+    # Record streak activity for post creation
+    streak_result = None
+    try:
+        from app.services.streak_service import record_activity
+        streak_result = record_activity(str(user_id), 'post')
+    except Exception:
+        pass
+        
+    res_payload = {
         "message": "Post created successfully",
         "post": serialize_doc(post_doc),
         "moderation_notice": moderation if moderation.get('flagged') else None
-    }), 201
+    }
+    if streak_result:
+        res_payload["streak_info"] = {
+            "current_streak": streak_result.get("current_streak", 0),
+            "xp_gained": streak_result.get("xp_gained", 0),
+            "streak_increased": streak_result.get("streak_increased", False),
+            "new_badges": streak_result.get("new_badges", [])
+        }
+    return jsonify(res_payload), 201
 
 @posts_bp.route('/<post_id>', methods=['PUT'])
 @jwt_required()
@@ -97,7 +229,6 @@ def update_post(post_id):
     if not post:
         return jsonify({"error": "Post not found"}), 404
         
-    # Check permissions: owner or admin
     if post.get('author_id') != user_id and role != 'admin':
         return jsonify({"error": "Permission denied"}), 403
         
@@ -144,8 +275,9 @@ def delete_post(post_id):
         
     db.posts.delete_one({"_id": post['_id']})
     db.comments.delete_many({"post_id": post_id})
+    db.saved_posts.delete_many({"post_id": post_id})
     
-    return jsonify({"message": "Post and associated comments deleted successfully"}), 200
+    return jsonify({"message": "Post and associated data deleted successfully"}), 200
 
 @posts_bp.route('/<post_id>/like', methods=['POST'])
 @jwt_required()
@@ -160,21 +292,21 @@ def toggle_like(post_id):
         return jsonify({"error": "Post not found"}), 404
         
     likes = post.get('likes', [])
+    liked = False
+    
     if user_id in likes:
         likes.remove(user_id)
         liked = False
     else:
         likes.append(user_id)
         liked = True
-        
-        # Create notification if user is not the post author
         if post.get('author_id') != user_id:
             db.notifications.insert_one({
                 "recipient_id": post.get('author_id'),
                 "sender_id": user_id,
                 "sender_name": username,
                 "type": "like",
-                "message": f"{username} liked your post: '{post.get('content', '')[:30]}...'",
+                "message": f"{username} liked your post",
                 "post_id": post_id,
                 "is_read": False,
                 "created_at": datetime.now(timezone.utc)
@@ -228,10 +360,14 @@ def add_comment(post_id):
     result = db.comments.insert_one(comment_doc)
     comment_doc['_id'] = result.inserted_id
     
-    # Increment post comment count
+    try:
+        from app.services.streak_service import record_activity
+        record_activity(str(user_id), 'comment')
+    except Exception:
+        pass
+        
     db.posts.update_one({"_id": post['_id']}, {"$inc": {"comments_count": 1}})
     
-    # Notify author if different user
     if post.get('author_id') != user_id:
         db.notifications.insert_one({
             "recipient_id": post.get('author_id'),

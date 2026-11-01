@@ -8,7 +8,8 @@ from app.services.ai_service import (
     summarize_post,
     generate_smart_replies,
     moderate_content,
-    conversational_assistant
+    conversational_assistant,
+    detect_trending_topics
 )
 
 ai_bp = Blueprint('ai', __name__, url_prefix='/api/ai')
@@ -52,10 +53,11 @@ def handle_summarize():
         post = db.posts.find_one({"_id": to_object_id(post_id)})
         if post and not post_text:
             post_text = post.get('content', '')
-        comments = list(db.comments.find({"post_id": post_id}).sort('created_at', 1).limit(10))
+        comment_docs = list(db.comments.find({"post_id": str(post_id)}).limit(20))
+        comments = [c.get('content', '') for c in comment_docs if c.get('content')]
         
-    if not post_text:
-        return jsonify({"error": "Text or valid post_id is required for summarization"}), 400
+    if not post_text and not comments:
+        return jsonify({"error": "Post text or discussion comments are required"}), 400
         
     result = summarize_post(post_text, comments)
     return jsonify(result), 200
@@ -66,7 +68,7 @@ def handle_smart_replies():
     content = data.get('content', '').strip()
     
     if not content:
-        return jsonify({"replies": ["Great insights! 👏", "Thanks for sharing! 💡", "Love this! 🚀"]}), 200
+        return jsonify({"error": "Post content is required"}), 400
         
     replies = generate_smart_replies(content)
     return jsonify({"replies": replies}), 200
@@ -95,4 +97,14 @@ def handle_chat():
         return jsonify({"error": "Messages array is required"}), 400
         
     result = conversational_assistant(messages, current_user=username)
+    return jsonify(result), 200
+
+@ai_bp.route('/trending-topics', methods=['GET'])
+def handle_trending_topics():
+    """Detects emerging viral topics across recent community posts."""
+    db = get_db()
+    recent_posts = list(db.posts.find({"is_flagged": {"$ne": True}}).sort('created_at', -1).limit(20))
+    sample_texts = [p.get('content', '') for p in recent_posts if p.get('content')]
+    
+    result = detect_trending_topics(sample_texts)
     return jsonify(result), 200
