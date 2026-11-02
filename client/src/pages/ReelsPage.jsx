@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Play, Heart, MessageCircle, Share2, Sparkles, Volume2 } from 'lucide-react';
+import { Play, Heart, MessageCircle, Share2, Sparkles, Volume2, VolumeX, Check } from 'lucide-react';
 
 export const ReelsPage = () => {
   const [likedReels, setLikedReels] = useState({});
+  const [isMuted, setIsMuted] = useState(true);
+  const [activeReelComments, setActiveReelComments] = useState(null);
+  const [toastMsg, setToastMsg] = useState('');
 
   const sampleReels = [
     {
@@ -13,7 +16,11 @@ export const ReelsPage = () => {
       tags: ['#webgl', '#ai', '#creativecoding'],
       likes: 1240,
       comments: 89,
-      videoPlaceholder: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80'
+      videoPlaceholder: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
+      sampleComments: [
+        { user: 'sarah_ai', text: 'This shader pipeline looks stunning!' },
+        { user: 'alex_innovator', text: 'Are you using Three.js or raw WebGL?' }
+      ]
     },
     {
       id: 'reel-2',
@@ -23,12 +30,21 @@ export const ReelsPage = () => {
       tags: ['#deeplearning', '#agents', '#techtrends'],
       likes: 2150,
       comments: 142,
-      videoPlaceholder: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop&q=80'
+      videoPlaceholder: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop&q=80',
+      sampleComments: [
+        { user: 'marcus_dev', text: 'Llama 3 and DeepSeek are changing the game!' }
+      ]
     }
   ];
 
   const toggleLike = (id) => {
     setLikedReels(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleShare = (id) => {
+    navigator.clipboard?.writeText(window.location.href);
+    setToastMsg('Reel link copied to clipboard!');
+    setTimeout(() => setToastMsg(''), 3000);
   };
 
   return (
@@ -68,9 +84,13 @@ export const ReelsPage = () => {
                 padding: '1.25rem'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div style={{ background: 'rgba(0,0,0,0.5)', padding: '0.4rem', borderRadius: '50%', color: '#fff' }}>
-                    <Volume2 size={16} />
-                  </div>
+                  <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    style={{ background: 'rgba(0,0,0,0.5)', border: 'none', padding: '0.45rem', borderRadius: '50%', color: '#fff', cursor: 'pointer' }}
+                    title={isMuted ? "Unmute audio" : "Mute audio"}
+                  >
+                    {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  </button>
                 </div>
 
                 {/* Bottom Overlay Info */}
@@ -95,25 +115,70 @@ export const ReelsPage = () => {
                     <button
                       onClick={() => toggleLike(reel.id)}
                       style={{ background: 'none', border: 'none', color: isLiked ? '#f43f5e' : '#fff', cursor: 'pointer', textAlign: 'center' }}
+                      title="Like Reel"
                     >
                       <Heart size={24} fill={isLiked ? '#f43f5e' : 'none'} />
                       <div style={{ fontSize: '0.72rem', marginTop: '0.2rem' }}>{reel.likes + (isLiked ? 1 : 0)}</div>
                     </button>
-                    <div style={{ color: '#fff', textAlign: 'center' }}>
+
+                    <button
+                      onClick={() => setActiveReelComments(activeReelComments === reel.id ? null : reel.id)}
+                      style={{ background: 'none', border: 'none', color: '#fff', textAlign: 'center', cursor: 'pointer' }}
+                      title="Comments"
+                    >
                       <MessageCircle size={24} />
                       <div style={{ fontSize: '0.72rem', marginTop: '0.2rem' }}>{reel.comments}</div>
-                    </div>
-                    <div style={{ color: '#fff', textAlign: 'center' }}>
+                    </button>
+
+                    <button
+                      onClick={() => handleShare(reel.id)}
+                      style={{ background: 'none', border: 'none', color: '#fff', textAlign: 'center', cursor: 'pointer' }}
+                      title="Share Reel"
+                    >
                       <Share2 size={22} />
                       <div style={{ fontSize: '0.72rem', marginTop: '0.2rem' }}>Share</div>
-                    </div>
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Expandable Reel Comments Drawer */}
+            {activeReelComments === reel.id && (
+              <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '0.6rem' }}>Comments ({reel.comments})</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {(reel.sampleComments || []).map((c, idx) => (
+                    <div key={idx} style={{ fontSize: '0.8rem', padding: '0.4rem 0.6rem', borderRadius: '6px', background: 'var(--bg-surface-elevated)' }}>
+                      <strong>@{c.user}</strong>: {c.text}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
+
+      {/* Floating Share Toast */}
+      {toastMsg && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          background: 'rgba(16, 185, 129, 0.95)',
+          color: '#fff',
+          padding: '0.6rem 1.25rem',
+          borderRadius: '9999px',
+          fontSize: '0.82rem',
+          fontWeight: 600,
+          boxShadow: 'var(--shadow-md)'
+        }}>
+          {toastMsg}
+        </div>
+      )}
     </div>
   );
 };
