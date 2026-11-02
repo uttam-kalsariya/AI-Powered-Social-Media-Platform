@@ -71,6 +71,9 @@ def register():
     # Dispatch email via Resend
     if ok and plain_otp:
         send_verification_email(email, username, plain_otp)
+        print(f"\n========================================================")
+        print(f"🔑 [AURA SECURITY OTP] Verification Code for {email}: {plain_otp}")
+        print(f"========================================================\n")
     
     # Notify admins about new user registration
     db.notifications.insert_one({
@@ -90,7 +93,9 @@ def register():
         "message": "Registration successful. Please verify your email with the 6-digit code sent to your inbox.",
         "user": sanitized_user,
         "email": email,
-        "expires_in_minutes": 5
+        "expires_in_minutes": 5,
+        "debug_otp": plain_otp,
+        "delivery_note": "If using Resend Free Tier without a verified domain, delivery is routed to uttamkalsariya1002@gmail.com (Check Spam/Promotions folder)."
     }), 201
 
 @auth_bp.route('/verify-email', methods=['POST'])
@@ -141,10 +146,15 @@ def resend_otp():
         return jsonify({"error": err}), 429
         
     send_verification_email(email, user.get('username', 'User'), plain_otp)
+    print(f"\n========================================================")
+    print(f"🔑 [AURA SECURITY OTP] Resent Verification Code for {email}: {plain_otp}")
+    print(f"========================================================\n")
     
     return jsonify({
         "message": "A new 6-digit verification code has been sent to your email.",
-        "expires_in_minutes": 5
+        "expires_in_minutes": 5,
+        "debug_otp": plain_otp,
+        "delivery_note": "If using Resend Free Tier without a verified domain, delivery is routed to uttamkalsariya1002@gmail.com (Check Spam/Promotions folder)."
     }), 200
 
 @auth_bp.route('/login', methods=['POST'])

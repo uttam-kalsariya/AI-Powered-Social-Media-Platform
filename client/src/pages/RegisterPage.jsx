@@ -44,7 +44,9 @@ export const RegisterPage = () => {
       navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`, {
         state: {
           email: email.trim(),
-          message: res.message || 'OTP verification code sent to your email.'
+          message: res.message || 'OTP verification code sent to your email.',
+          debugOtp: res.debug_otp,
+          deliveryNote: res.delivery_note
         }
       });
     } catch (err) {
