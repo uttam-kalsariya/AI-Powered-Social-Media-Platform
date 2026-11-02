@@ -235,8 +235,8 @@ export const AdminDashboard = () => {
             </div>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', minWidth: '680px', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
                   <th style={{ padding: '0.75rem' }}>User</th>
@@ -250,7 +250,7 @@ export const AdminDashboard = () => {
               </thead>
               <tbody>
                 {filteredUsers.map(u => (
-                  <tr key={u.id || u._id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                  <tr key={u.id || u._id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td style={{ padding: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                       <img src={u.avatar} alt={u.username} style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
                       <span style={{ fontWeight: 600 }}>{u.username}</span>
@@ -329,7 +329,7 @@ export const AdminDashboard = () => {
                 style={{
                   padding: '1rem',
                   borderRadius: 'var(--radius-md)',
-                  background: post.is_flagged ? 'rgba(244, 63, 94, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                  background: post.is_flagged ? 'rgba(244, 63, 94, 0.08)' : 'var(--bg-surface-elevated)',
                   border: post.is_flagged ? '1px solid rgba(244, 63, 94, 0.3)' : '1px solid var(--border-subtle)',
                   marginBottom: '0.85rem'
                 }}
@@ -405,7 +405,8 @@ export const AdminDashboard = () => {
                   key={idx}
                   style={{
                     padding: '0.75rem 1rem',
-                    background: 'rgba(255, 255, 255, 0.03)',
+                    background: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: 'var(--radius-sm)',
                     display: 'flex',
                     alignItems: 'center',
