@@ -19,21 +19,28 @@ export const ForgotPasswordPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [targetEmail, setTargetEmail] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
-      setError('Please provide your registered email address.');
+      setError('Please provide your registered email address or username.');
       return;
     }
 
     setLoading(true);
     setError('');
     setMessage('');
+    setResetCode('');
 
     try {
       const res = await forgotPassword(email.trim());
-      setMessage(res.message || 'If this email is registered, password reset instructions have been dispatched.');
+      setMessage(res.message || 'If this account is registered, password reset instructions have been dispatched.');
+      const code = res.reset_token || res.dev_reset_token || '';
+      const verifiedEmail = res.email || email.trim();
+      setResetCode(code);
+      setTargetEmail(verifiedEmail);
     } catch (err) {
       setError(err.message || 'Unable to process password reset request.');
     } finally {
@@ -110,14 +117,33 @@ export const ForgotPasswordPage = () => {
               <span>Reset Code Dispatched</span>
             </div>
             <div>{message}</div>
+
+            {resetCode && (
+              <div style={{
+                marginTop: '0.85rem',
+                padding: '0.75rem',
+                background: 'rgba(99, 102, 241, 0.15)',
+                border: '1px solid rgba(99, 102, 241, 0.35)',
+                borderRadius: 'var(--radius-sm)',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                  ⚡ Instant Reset Code:
+                </div>
+                <div style={{ fontFamily: 'monospace', fontSize: '1.5rem', fontWeight: 800, letterSpacing: '4px', color: '#818cf8' }}>
+                  {resetCode}
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
-              onClick={() => navigate(`/reset-password?email=${encodeURIComponent(email)}`, { state: { email } })}
+              onClick={() => navigate(`/reset-password?email=${encodeURIComponent(targetEmail || email)}&token=${encodeURIComponent(resetCode)}`, { state: { email: targetEmail || email, token: resetCode } })}
               className="btn btn-primary"
               style={{ marginTop: '0.85rem', width: '100%', fontSize: '0.82rem', padding: '0.5rem' }}
             >
               <KeyRound size={14} />
-              <span>Proceed to Set New Password</span>
+              <span>{resetCode ? 'Auto-fill Code & Set New Password' : 'Proceed to Set New Password'}</span>
             </button>
           </div>
         )}

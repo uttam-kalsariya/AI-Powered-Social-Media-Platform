@@ -13,19 +13,42 @@ import {
 } from 'lucide-react';
 
 export const ResetPasswordPage = () => {
-  const { resetPassword } = useAuth();
+  const { resetPassword, forgotPassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const queryParams = new URLSearchParams(location.search);
   const initialEmail = queryParams.get('email') || location.state?.email || '';
+  const initialToken = queryParams.get('token') || queryParams.get('code') || location.state?.token || '';
 
   const [email, setEmail] = useState(initialEmail);
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState(initialToken);
   const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const handleResend = async () => {
+    if (!email.trim()) {
+      setError('Please enter your email address first.');
+      return;
+    }
+    setResending(true);
+    setError('');
+    try {
+      const res = await forgotPassword(email.trim());
+      setSuccess(res.message || 'New reset code dispatched! Check your inbox or spam.');
+      const code = res.reset_token || res.dev_reset_token;
+      if (code) {
+        setToken(code);
+      }
+    } catch (err) {
+      setError(err.message || 'Unable to dispatch reset code.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -147,14 +170,32 @@ export const ResetPasswordPage = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>
-              Reset Code / Token
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Reset Code / Token
+              </label>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending || loading}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--primary)',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+              >
+                {resending ? 'Sending...' : "Didn't get code? Resend"}
+              </button>
+            </div>
             <div style={{ position: 'relative' }}>
               <KeyRound size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type="text"
-                placeholder="Paste code from email"
+                placeholder="Enter 6-digit reset code"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 className="input-field"
@@ -163,6 +204,9 @@ export const ResetPasswordPage = () => {
                 required
               />
             </div>
+            <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.35rem', marginBottom: 0 }}>
+              💡 Note: If email doesn't appear in your inbox within 1 minute, check your <strong>Spam / Junk</strong> folder.
+            </p>
           </div>
 
           <div>

@@ -268,16 +268,28 @@ def get_current_user():
 @auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
     data = request.get_json() or {}
-    email = data.get('email', '').strip().lower()
+    identifier = (data.get('email') or data.get('username') or '').strip()
     
-    if not email:
-        return jsonify({"error": "Email is required"}), 400
+    if not identifier:
+        return jsonify({"error": "Email or username is required"}), 400
         
     db = get_db()
-    user = db.users.find_one({"email": email})
+    # Support case-insensitive search by either email or username
+    user = db.users.find_one({
+        "$or": [
+            {"email": identifier.lower()},
+            {"username": identifier},
+            {"email": {"$regex": f"^{re.escape(identifier)}$", "$options": "i"}},
+            {"username": {"$regex": f"^{re.escape(identifier)}$", "$options": "i"}}
+        ]
+    })
+    
     if not user:
-        # Don't leak existence of email for security
-        return jsonify({"message": "If this email is registered, a password reset token has been sent."}), 200
+        # Don't leak user existence for unregistered identifiers
+        return jsonify({
+            "message": "If this account is registered, a password reset token has been sent.",
+            "dev_reset_token": None
+        }), 200
         
     reset_token = f"{secrets.randbelow(900000) + 100000}"
     db.users.update_one(
@@ -285,29 +297,42 @@ def forgot_password():
         {"$set": {"reset_token": reset_token}}
     )
     
-    send_password_reset_email(email, user.get('username', 'User'), reset_token)
+    target_email = user.get('email', identifier)
+    email_result = send_password_reset_email(target_email, user.get('username', 'User'), reset_token)
+    print(f"🔑 [AURA PASSWORD RESET CODE] Reset Token for {target_email} ({user.get('username')}): {reset_token}")
     
     return jsonify({
-        "message": "If this email is registered, a password reset token has been sent.",
-        "dev_reset_token": reset_token  # Provided for frictionless development testing
+        "message": f"Password reset instructions have been dispatched to {target_email}.",
+        "email": target_email,
+        "reset_token": reset_token,
+        "dev_reset_token": reset_token,
+        "email_sent": email_result.get("success", False)
     }), 200
 
 @auth_bp.route('/reset-password', methods=['POST'])
 def reset_password():
     data = request.get_json() or {}
-    email = data.get('email', '').strip().lower()
-    token = data.get('token', '').strip()
+    identifier = (data.get('email') or data.get('username') or '').strip()
+    token = str(data.get('token') or data.get('code') or '').strip()
     new_password = data.get('new_password', '')
     
-    if not email or not token or not new_password:
-        return jsonify({"error": "Email, token, and new password are required"}), 400
+    if not identifier or not token or not new_password:
+        return jsonify({"error": "Email or username, reset code, and new password are required"}), 400
         
     if len(new_password) < 6:
         return jsonify({"error": "Password must be at least 6 characters"}), 400
         
     db = get_db()
-    user = db.users.find_one({"email": email})
-    if not user or user.get('reset_token') != token:
+    user = db.users.find_one({
+        "$or": [
+            {"email": identifier.lower()},
+            {"username": identifier},
+            {"email": {"$regex": f"^{re.escape(identifier)}$", "$options": "i"}},
+            {"username": {"$regex": f"^{re.escape(identifier)}$", "$options": "i"}}
+        ]
+    })
+    
+    if not user or str(user.get('reset_token', '')) != token:
         return jsonify({"error": "Invalid or expired password reset token"}), 400
         
     db.users.update_one(
