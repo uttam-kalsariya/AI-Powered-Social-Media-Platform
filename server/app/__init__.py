@@ -1,3 +1,5 @@
+import os
+import re
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -198,7 +200,28 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     
-    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+    # Configure CORS: allow local development and all Vercel production/preview deployments
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        re.compile(r"^https:\/\/.*\.vercel\.app$"),
+    ]
+    frontend_url = os.getenv("FRONTEND_URL")
+    if frontend_url:
+        for origin in frontend_url.split(","):
+            origin = origin.strip()
+            if origin and origin not in allowed_origins:
+                allowed_origins.append(origin)
+
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": allowed_origins}},
+        supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+    )
     jwt.init_app(app)
     
     # Initialize DB and seed
