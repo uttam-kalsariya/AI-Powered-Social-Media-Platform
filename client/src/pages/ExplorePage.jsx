@@ -14,7 +14,8 @@ import {
   UserCheck, 
   Compass,
   Flame,
-  ArrowUpRight
+  ArrowUpRight,
+  X
 } from 'lucide-react';
 import { api } from '../services/api';
 import { PostCard } from '../components/PostCard';
@@ -28,6 +29,7 @@ export const ExplorePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
+  const [activeModalPost, setActiveModalPost] = useState(null);
   
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
@@ -123,21 +125,17 @@ export const ExplorePage = () => {
               placeholder="Search trending topics, hashtags, creators or discussions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="input-field"
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem 0.75rem 2.6rem',
-                borderRadius: 'var(--radius-md)',
-                background: 'rgba(15, 23, 42, 0.7)',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-primary)',
-                fontSize: '0.92rem',
-                outline: 'none'
+                fontSize: '0.92rem'
               }}
             />
           </div>
 
           {/* View mode toggle */}
-          <div style={{ display: 'flex', gap: '0.25rem', background: 'rgba(15, 23, 42, 0.6)', padding: '0.2rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-surface-elevated)', padding: '0.25rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             <button
               onClick={() => setViewMode('list')}
               className={`btn ${viewMode === 'list' ? 'btn-primary' : 'btn-secondary'}`}
@@ -329,9 +327,18 @@ export const ExplorePage = () => {
           <div className="glass-panel" style={{ padding: '3.5rem', textAlign: 'center' }}>
             <Sparkles size={36} color="var(--accent-cyan)" style={{ marginBottom: '0.75rem' }} />
             <h3>No discussions found</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.3rem', maxWidth: '380px', margin: '0.3rem auto 0' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.3rem', maxWidth: '380px', margin: '0.3rem auto 1rem' }}>
               Try searching with different keywords, or click on one of the top trending hashtags above.
             </p>
+            {(searchTerm || selectedTag) && (
+              <button
+                onClick={() => { setSearchTerm(''); setSelectedTag(''); }}
+                className="btn btn-secondary"
+                style={{ fontSize: '0.82rem', padding: '0.45rem 1rem' }}
+              >
+                Clear Search & Filters
+              </button>
+            )}
           </div>
         ) : viewMode === 'list' ? (
           /* List Stream View */
@@ -356,7 +363,8 @@ export const ExplorePage = () => {
             {posts.map(post => (
               <div
                 key={post.id || post._id}
-                className="glass-panel"
+                onClick={() => setActiveModalPost(post)}
+                className="glass-panel group"
                 style={{
                   padding: '1rem',
                   display: 'flex',
@@ -364,7 +372,16 @@ export const ExplorePage = () => {
                   justifyContent: 'space-between',
                   borderRadius: '12px',
                   border: '1px solid var(--border-subtle)',
-                  transition: 'transform 0.15s ease'
+                  cursor: 'pointer',
+                  transition: 'transform 0.15s ease, border-color 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--primary)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  e.currentTarget.style.transform = 'none';
                 }}
               >
                 <div>
@@ -372,7 +389,7 @@ export const ExplorePage = () => {
                     <img
                       src={post.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_name}`}
                       alt={post.author_name}
-                      style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#1e293b' }}
+                      style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--bg-surface-elevated)' }}
                     />
                     <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{post.author_name}</div>
                   </div>
@@ -410,6 +427,46 @@ export const ExplorePage = () => {
           </div>
         )}
       </div>
+
+      {/* Post Detail Modal from Grid View Click */}
+      {activeModalPost && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{ width: '100%', maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+              <button
+                onClick={() => setActiveModalPost(null)}
+                className="btn btn-secondary"
+                style={{ padding: '0.4rem', borderRadius: '50%' }}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <PostCard
+              post={activeModalPost}
+              onPostDeleted={(id) => {
+                setPosts(prev => prev.filter(p => (p.id !== id && p._id !== id)));
+                setActiveModalPost(null);
+              }}
+              onPostUpdated={(up) => {
+                setPosts(prev => prev.map(p => (p.id === up.id || p._id === up.id ? up : p)));
+                setActiveModalPost(up);
+              }}
+              onOpenAuth={() => navigate('/login')}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
