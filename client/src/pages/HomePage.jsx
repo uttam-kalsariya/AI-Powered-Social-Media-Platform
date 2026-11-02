@@ -129,40 +129,23 @@ export const HomePage = () => {
   };
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'minmax(0, 1fr) 320px',
-      gap: '1.5rem',
-      alignItems: 'start',
-      position: 'relative'
-    }}>
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start relative">
       {/* Floating Gamification Toast Notification */}
       {streakToast && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          right: '24px',
-          zIndex: 9999,
-          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(239, 68, 68, 0.95))',
-          color: '#ffffff',
-          padding: '0.75rem 1.25rem',
-          borderRadius: '12px',
-          boxShadow: '0 10px 25px rgba(245, 158, 11, 0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.6rem',
-          fontSize: '0.85rem',
-          fontWeight: 600,
-          backdropFilter: 'blur(8px)',
-          animation: 'bounce 0.5s ease'
-        }}>
+        <div 
+          className="fixed top-16 md:top-6 right-4 md:right-6 z-50 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-sm font-semibold backdrop-blur-md"
+          style={{
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(239, 68, 68, 0.95))',
+            boxShadow: '0 10px 25px rgba(245, 158, 11, 0.4)'
+          }}
+        >
           <Flame size={18} />
           <span>{streakToast}</span>
         </div>
       )}
 
       {/* Left Column: Main Feed */}
-      <div>
+      <div className="min-w-0 w-full">
         {/* Creator Card */}
         <CreatePostCard
           onPostCreated={handlePostCreated}
@@ -297,15 +280,26 @@ export const HomePage = () => {
                   ? `No community posts tagged #${selectedTag} yet.`
                   : 'Be the first to share an inspiring thought with the Aura community!'}
             </p>
-            {feedTab === 'following' && (
-              <button
-                onClick={() => setFeedTab('for_you')}
-                className="btn btn-primary"
-                style={{ fontSize: '0.82rem', padding: '0.45rem 1rem' }}
-              >
-                Switch to For You Feed
-              </button>
-            )}
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {feedTab === 'following' && (
+                <button
+                  onClick={() => setFeedTab('for_you')}
+                  className="btn btn-primary"
+                  style={{ fontSize: '0.82rem', padding: '0.45rem 1rem' }}
+                >
+                  Switch to For You Feed
+                </button>
+              )}
+              {selectedTag && (
+                <button
+                  onClick={() => setSelectedTag('')}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.82rem', padding: '0.45rem 1rem' }}
+                >
+                  Clear #{selectedTag} Filter
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -323,7 +317,7 @@ export const HomePage = () => {
       </div>
 
       {/* Right Column: Dynamic Social Widgets */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'sticky', top: '1.5rem' }}>
+      <div className="flex flex-col gap-4 lg:sticky lg:top-6 w-full">
         {/* User Card */}
         {user && (
           <div className="glass-panel" style={{ padding: '1.25rem' }}>
