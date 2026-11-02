@@ -222,12 +222,30 @@ def create_app():
     app.register_blueprint(users_bp)
     app.register_blueprint(streaks_bp)
     
-    @app.route('/api/health', methods=['GET'])
-    def health_check():
+    @app.route('/', methods=['GET', 'HEAD'])
+    def root():
+        """Root health check endpoint for Render health probes (GET/HEAD)."""
+        return jsonify({"status": "ok"}), 200
+
+    @app.route('/health', methods=['GET', 'HEAD'])
+    def health():
+        """Health check endpoint that verifies database ping."""
+        db_stat = get_status()
+        is_healthy = db_stat.get("ping", False) is True
         return jsonify({
-            "status": "healthy",
+            "status": "ok" if is_healthy else "degraded",
+            "database": db_stat
+        }), (200 if is_healthy else 503)
+
+    @app.route('/api/health', methods=['GET', 'HEAD'])
+    def api_health():
+        """API namespace health check endpoint."""
+        db_stat = get_status()
+        is_healthy = db_stat.get("ping", False) is True
+        return jsonify({
+            "status": "healthy" if is_healthy else "degraded",
             "service": "AI-Powered Social Media Platform API",
-            "database": get_status()
-        }), 200
+            "database": db_stat
+        }), (200 if is_healthy else 503)
         
     return app
