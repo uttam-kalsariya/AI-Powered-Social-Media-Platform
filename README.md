@@ -1,6 +1,6 @@
 # 🌟 Aura — AI-Powered Social Media Platform
 
-An enterprise-grade, modern social media platform engineered with **React 19**, **Vite**, **Tailwind CSS**, **Python Flask**, and **MongoDB Atlas**, featuring end-to-end authentication, dual user personas (**Admin** and **User**), real-time notifications, interactive feeds, and an intelligent suite of **AI-driven creator tools and assistants**.
+An enterprise-grade, modern social media platform engineered with **React 19**, **Vite**, **Tailwind CSS**, **Python Flask**, and **MongoDB Atlas**, featuring end-to-end authentication, dual user personas (**Admin** and **User**), real-time notifications, interactive feeds, short-form reels, direct messaging, daily streaks gamification, and an intelligent suite of **AI-driven creator tools and assistants**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-19.3-61dafb.svg?logo=react)](https://react.dev/)
@@ -8,6 +8,7 @@ An enterprise-grade, modern social media platform engineered with **React 19**, 
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248.svg?logo=mongodb)](https://www.mongodb.com/atlas)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
 [![Gemini AI](https://img.shields.io/badge/Google_Gemini-1.5_Flash-8E75C4.svg?logo=google)](https://deepmind.google/technologies/gemini/)
+[![Tests](https://img.shields.io/badge/Pytest-30%20Passed-brightgreen.svg)](docs/TESTING.md)
 
 **GitHub Repository**: [https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform](https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform.git)
 
@@ -24,43 +25,65 @@ Explore the comprehensive engineering documentation maintained in this repositor
 | [**`INSTALLATION.md`**](INSTALLATION.md) | Windows 11 setup guide, prerequisites, and startup commands |
 | [**`docs/DATABASE_SCHEMA.md`**](docs/DATABASE_SCHEMA.md) | MongoDB Atlas design, collection models, ER diagrams, and indexes |
 | [**`docs/API_DOCUMENTATION.md`**](docs/API_DOCUMENTATION.md) | Complete REST API endpoint reference, payloads, and response codes |
-| [**`docs/AUTHENTICATION.md`**](docs/AUTHENTICATION.md) | JWT tokens, Bcrypt password hashing, route guards, and email verification |
+| [**`docs/AUTHENTICATION.md`**](docs/AUTHENTICATION.md) | JWT tokens, Bcrypt password hashing, route guards, and Resend OTP verification |
 | [**`docs/AI_FEATURES.md`**](docs/AI_FEATURES.md) | Google Gemini integration, copywriting tones, and local fallback engine |
 | [**`docs/DEVELOPMENT_ROADMAP.md`**](docs/DEVELOPMENT_ROADMAP.md) | Phase-by-phase development progress and future milestone tracker |
-| [**`docs/TESTING.md`**](docs/TESTING.md) | Quality assurance protocols, PowerShell test scripts, and test cases |
-| [**`docs/DEPLOYMENT.md`**](docs/DEPLOYMENT.md) | Production cloud deployment guides for Vercel, Render, and Atlas |
+| [**`docs/TESTING.md`**](docs/TESTING.md) | Quality assurance protocols, 30 automated test cases, and test suite execution |
+| [**`docs/DEPLOYMENT.md`**](docs/DEPLOYMENT.md) | Production cloud deployment guides for Vercel, Render, and MongoDB Atlas |
 | [**`CONTRIBUTING.md`**](CONTRIBUTING.md) | Git workflow, branch naming, and pull request guidelines |
 | [**`CHANGELOG.md`**](CHANGELOG.md) | Version history, updates, and release notes |
 
 ---
 
-## 🚀 Key Features
+## 🚀 Key Implemented Features
 
-### 1. 🔐 Robust Authentication & Role Management
-- **Registration & Login**: Secure credential authentication powered by `bcrypt` password hashing and `Flask-JWT-Extended`.
-- **Email Verification**: Generates verification tokens sent via SMTP (with dev console preview mode for local environments).
-- **Password Reset**: End-to-end tokenized forgot-password and reset-password workflow.
-- **Admin Login Alerts**: Real-time notifications dispatched to administrators whenever any user logs in.
+### 1. 🤖 Full AI Creator Suite (Google Gemini 1.5 Flash)
+- **AI Post Generation**: Generates structured, engaging posts with hooks and hashtags based on topics and chosen tones (`Casual`, `Professional`, `Witty`, `Inspirational`).
+- **AI Tone Rewriter**: 1-click text rephrasing into professional, witty, or inspirational tones before publishing.
+- **AI Discussion Summarization**: Instant multi-point summaries highlighting the core discussion sentiments in post comment threads.
+- **AI Smart Replies**: Contextual 1-click comment recommendations based on post context.
+- **AI Content Moderation Guard**: Automated safety filter detecting toxic keywords, abuse, and spam patterns with numerical toxicity scoring.
+- **Aura AI Social Strategist**: Interactive conversational assistant helping users brainstorm viral topics, write hooks, and refine growth strategies.
+- **Resilient AI Fallback**: Dual-tier pipeline that routes prompts to an intelligent local heuristic engine if an external API key is omitted or quota is exceeded.
 
-### 2. 👥 Two User Personas
-- **Administrator**:
-  - Live platform telemetry: Total users, active users, posts, comments, moderation flags, and 24h logins.
-  - User directory governance: Search users, inspect last login, grant/revoke admin rights, ban/unban accounts.
-  - Moderation queue: Inspect AI toxicity scores, dismiss flags, or delete violations.
-  - Audit logs: Track user logins, signups, and admin actions.
-- **Standard User**:
-  - Personal profile management: Custom bio and avatar generator.
-  - Feed interaction: Share posts with text, images, and hashtags; like and comment on community content.
-  - Receive real-time interactive notifications for likes and comments.
+### 2. 🔐 Robust Authentication & Role Governance
+- **Dual User Personas**: Distinct workflows and dashboard experiences for **Regular Users** and **Administrators**.
+- **Credentials & Session Security**: Secure authentication powered by `bcrypt` (work factor 12) password hashing and stateless `Flask-JWT-Extended`.
+- **Resend Email OTP Verification**: Real-time email verification with HMAC-SHA256 hashed OTPs, 5-minute expiration, cooldown protection, and rate-limiting.
+- **Tokenized Password Reset**: Secure forgot-password and reset-password workflow.
+- **Admin Login Alerts**: Real-time notification dispatches to platform administrators upon user login events.
 
-### 3. 🤖 Full AI Agent Suite
-1. **AI Post Generation**: Creates structured, formatted posts with hooks and hashtags based on a topic and chosen tone (`Casual`, `Professional`, `Witty`, `Inspirational`).
-2. **AI Tone Rewriting & Polish**: 1-click content rephrasing into professional, witty, or inspirational tones.
-3. **AI Discussion Summarization**: Instant multi-point summaries highlighting the key discussion sentiments in post threads.
-4. **AI Smart Replies**: Contextual 1-click comment suggestions based on post context.
-5. **AI Content Moderation Guard**: Automated safety filter detecting toxic keywords, abuse, and spam patterns with toxicity scoring.
-6. **Aura AI Social Strategist**: Interactive conversational assistant helping users brainstorm viral topics, write hooks, and refine strategies.
-- **Resilient AI Fallback**: Dual-tier pipeline that automatically routes prompts to an intelligent local heuristic engine if an external API key is omitted or unavailable.
+### 3. 📱 Social Feed, Reels & Discovery
+- **Interactive Chronological Feed**: Supports rich text, images, and clickable hashtag pills with full responsiveness.
+- **Short-Form Video (Reels)**: Immersive vertical reel feed with floating action controls, audio mute/unmute toggle, and a slide-out comments drawer.
+- **Explore & Trending**: Real-time trending hashtags, debounced search by user or tag, and an interactive popover media modal.
+- **Post Interactions**: Likes counter, nested comment threads with deletion controls, bookmarks/saves, and social share links.
+- **Graceful Image Fallback**: Automatic detection of broken or invalid image URLs with fallback placeholders.
+
+### 4. 💬 Direct Messaging & Chat
+- **Conversations Drawer**: Responsive chat navigation with search and instant user switching.
+- **Real-Time Direct Messages**: Direct messaging system with delivery timestamps, active thread indicators, and unread badges.
+
+### 5. 🔥 Gamification & Streaks
+- **Daily Activity Streaks**: Consecutive active day counter with visual calendar indicators.
+- **XP & Level Progression**: Experience point rewards for posts, comments, and daily streaks.
+- **Streak Freeze Shields**: Shield mechanics protecting users from streak loss on inactive days.
+- **Leaderboards**: Community ranking displaying top active users by streak count and total XP.
+
+### 6. 🔔 Real-Time Notifications
+- **Activity Alerts**: Instant notifications for likes, comments, mentions, and follows.
+- **Navigation Flyout**: Dropdown from the top navigation bar with outside-click dismissal.
+- **Notifications Hub**: Dedicated page with 1-click deep links to referenced posts or user profiles and a "Mark All as Read" action.
+
+### 7. 🛡️ Admin Governance Dashboard
+- **Live System Telemetry**: Overview metrics tracking total users, active accounts, total posts, comments, moderation flags, and 24h logins.
+- **User Management**: Search users, promote/demote administrator rights, and ban/unban abusive accounts.
+- **Moderation Queue**: Review AI-flagged posts with toxicity scores, dismiss false positives, or delete toxic content.
+- **Audit Logs**: Chronological log of administrative actions, user registrations, and login events.
+
+### 8. 🎨 Modern Glassmorphic Design System
+- **Dynamic Theme Switcher**: Full support for **Dark Mode** and **Light Mode** with persistent local storage.
+- **Mobile Responsive Layout**: Scaled layouts for smartphones, tablets, and wide monitors.
 
 ---
 
@@ -68,11 +91,13 @@ Explore the comprehensive engineering documentation maintained in this repositor
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 19, Vite, Tailwind CSS, Lucide Icons, Axios, React Router |
-| **Backend** | Python 3.12, Flask, Flask-CORS, Flask-JWT-Extended, PyMongo, Bcrypt |
-| **Database** | MongoDB Atlas (Cloud Cluster) / Resilient in-memory mongomock fallback |
-| **AI Integration** | Google Gemini 1.5 Flash API + Built-in AI Social Heuristic Engine |
-| **Email Service** | SMTP / TLS email delivery with developer console logger |
+| **Frontend** | React 19, Vite, Tailwind CSS, Lucide Icons, Axios, React Router 6 |
+| **Backend** | Python 3.11/3.12, Flask 3.0.3, Gunicorn 22.0.0, Flask-CORS, Flask-JWT-Extended, PyMongo 4.7.2, Bcrypt |
+| **Database** | MongoDB Atlas (Cloud Cluster) / Resilient in-memory mongomock test engine |
+| **AI Integration** | Google Gemini 1.5 Flash API + Built-in Local Heuristic Fallback Engine |
+| **Email Delivery** | Resend API + SMTP fallback for OTP delivery |
+| **Testing** | Pytest (30 automated unit and integration tests passing) |
+| **Deployment** | Render (Flask + Gunicorn), Vercel (React Frontend), MongoDB Atlas (Cloud DB) |
 
 ---
 
@@ -82,98 +107,34 @@ Explore the comprehensive engineering documentation maintained in this repositor
 AI-Powered-Social-Media-Platform/
 ├── client/                      # React Frontend (Vite)
 │   ├── src/
-│   │   ├── components/          # Reusable UI components (Navbar, PostCard, CreatePostCard, etc.)
-│   │   ├── layouts/             # App layout wrappers
-│   │   ├── pages/               # Route views
-│   │   ├── hooks/               # Custom hooks (useDebounce, etc.)
-│   │   ├── services/            # axiosClient.js, api.js
+│   │   ├── components/          # Reusable UI (Navbar, PostCard, CreatePostCard, StreakModal, AdminDashboard)
+│   │   ├── pages/               # Route views (HomePage, ExplorePage, ReelsPage, MessagesPage, ProfilePage, SettingsPage)
 │   │   ├── context/             # AuthContext.jsx
-│   │   ├── utils/               # formatDate.js, etc.
-│   │   ├── assets/              # Static assets & icons
-│   │   ├── App.jsx              # Main view manager
-│   │   ├── main.jsx             # React entry point
+│   │   ├── services/            # axiosClient.js, api.js
+│   │   ├── App.jsx              # Application router
 │   │   └── index.css            # Tailwind directives & glassmorphic tokens
-│   ├── tailwind.config.js       # Tailwind theme configuration
-│   ├── postcss.config.js        # PostCSS configuration
-│   ├── vite.config.js           # Server proxy configuration
+│   ├── tailwind.config.js       # Tailwind configuration
 │   └── package.json
 │
 ├── server/                      # Flask Backend API
 │   ├── app/
-│   │   ├── routes/              # auth, posts, ai, admin, notifications, users
-│   │   ├── models/              # helpers and serializers
-│   │   ├── services/            # ai_service, email_service, db
-│   │   ├── utils/               # response.py, validators.py
+│   │   ├── routes/              # auth, posts, ai, admin, notifications, users, streaks
+│   │   ├── services/            # ai_service, email_service, streak_service
+│   │   ├── database.py          # MongoDB Atlas connection manager with retry backoff & CA bundle
 │   │   ├── config.py            # Environment configurations
-│   │   └── __init__.py          # Flask app factory & initial data seeder
+│   │   └── __init__.py          # Flask app factory, health routes & initial data seeder
+│   ├── tests/                   # 30 automated Pytest unit and integration tests
+│   ├── test_mongo.py            # Standalone MongoDB Atlas pre-flight diagnostic script
 │   ├── run.py                   # Server launch entry point
-│   ├── requirements.txt         # Python dependencies
-│   ├── .env.example             # Environment template
+│   ├── requirements.txt         # Pinned Python dependencies
 │   └── .env                     # Local environment file (Excluded from Git)
 │
-├── docs/                        # Deep Technical Documentation
-│   ├── DATABASE_SCHEMA.md
-│   ├── API_DOCUMENTATION.md
-│   ├── AUTHENTICATION.md
-│   ├── AI_FEATURES.md
-│   ├── DEVELOPMENT_ROADMAP.md
-│   ├── TESTING.md
-│   └── DEPLOYMENT.md
-│
-├── PROJECT_OVERVIEW.md
-├── TECH_STACK.md
-├── INSTALLATION.md
-├── CONTRIBUTING.md
-├── CHANGELOG.md
-├── LICENSE
-└── .gitignore
+├── test_mongo.py                # Standalone diagnostic runner
+├── requirements.txt             # Root requirements
+├── .python-version              # 3.11.9
+├── docs/                        # Complete Engineering Documentation Suite
+└── README.md
 ```
-
----
-
-## 🔥 Upcoming Features (Roadmap)
-
-The following features are planned for future releases to make the platform more engaging, intelligent, and production-ready.
-
-### 🏆 Streak Counter
-- Daily login streak tracking
-- Post creation streaks
-- Comment activity streaks
-- Weekly engagement milestones
-- Achievement rewards for maintaining streaks
-- Visual streak calendar
-- XP points and badge rewards
-
-### 🌍 Social Features
-- 🔥 Trending Topics
-- #️⃣ Trending Hashtags
-- 📍 Nearby Users
-- 🌎 Explore Page
-- 🎯 Personalized Recommendations
-- 💾 Saved Posts
-- 📂 Collections
-- 🔖 Bookmarks
-
-### 🚀 Future AI Features
-- AI Smart Feed Recommendations
-- AI Trending Topic Detection
-- AI Auto Hashtag Generator
-- AI Content Moderation
-- AI Smart Search
-- AI Engagement Analytics
-- AI Profile Insights
-
-### 📱 Planned Enhancements
-- Real-Time Notifications
-- WebSocket Support
-- Infinite Scrolling Feed
-- Dark & Light Mode
-- Mobile PWA Support
-- Story Feature
-- Follow / Unfollow Users
-- Real-Time Chat
-- User Verification
-- Admin Analytics Dashboard
 
 ---
 
@@ -185,6 +146,7 @@ For immediate evaluation, use the 1-click demo buttons in the Sign In modal or e
 |---|---|---|---|
 | **Administrator** | `admin` / `admin@aisocial.local` | `AdminPass123!` | Admin |
 | **Demo User** | `alex_innovator` / `alex@aisocial.local` | `UserPass123!` | Standard User |
+| **Test User** | `uttam` / `uttamkalsariya1002@gmail.com` | `UserPass123!` | Standard User |
 
 ---
 
@@ -196,7 +158,7 @@ cd server
 .\venv\Scripts\activate
 python run.py
 ```
-*API runs on `http://127.0.0.1:5000` (Health check: `http://127.0.0.1:5000/api/health`)*
+*API runs on `http://127.0.0.1:5000` (Health probe: `http://127.0.0.1:5000/health`)*
 
 ### 2. Start the React Frontend (Terminal 2)
 ```powershell
@@ -204,6 +166,19 @@ cd client
 npm run dev
 ```
 *Application opens on `http://localhost:3000`*
+
+### 3. Run Automated Tests
+```powershell
+cd server
+.\venv\Scripts\activate
+pytest tests
+```
+*30 passed in ~20s*
+
+### 4. Verify MongoDB Atlas Connectivity
+```powershell
+python test_mongo.py
+```
 
 For complete setup instructions, see [**`INSTALLATION.md`**](INSTALLATION.md).
 
