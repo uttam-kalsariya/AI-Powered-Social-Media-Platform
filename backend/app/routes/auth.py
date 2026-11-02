@@ -93,9 +93,9 @@ def register():
         "message": "Registration successful. Please verify your email with the 6-digit code sent to your inbox.",
         "user": sanitized_user,
         "email": email,
-        "expires_in_minutes": 5,
-        "debug_otp": plain_otp,
-        "delivery_note": "If using Resend Free Tier without a verified domain, delivery is routed to uttamkalsariya1002@gmail.com (Check Spam/Promotions folder)."
+        "expires_in_minutes": 5
+
+
     }), 201
 
 @auth_bp.route('/verify-email', methods=['POST'])
@@ -152,9 +152,9 @@ def resend_otp():
     
     return jsonify({
         "message": "A new 6-digit verification code has been sent to your email.",
-        "expires_in_minutes": 5,
-        "debug_otp": plain_otp,
-        "delivery_note": "If using Resend Free Tier without a verified domain, delivery is routed to uttamkalsariya1002@gmail.com (Check Spam/Promotions folder)."
+        "expires_in_minutes": 5
+
+
     }), 200
 
 @auth_bp.route('/login', methods=['POST'])

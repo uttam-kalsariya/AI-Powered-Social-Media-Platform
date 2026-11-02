@@ -2,16 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Sparkles, 
-  Mail, 
   KeyRound, 
+  Mail, 
   ArrowRight, 
   RefreshCw, 
   AlertCircle, 
   CheckCircle2,
-  Clock,
-  Zap,
-  Info
+  Clock
 } from 'lucide-react';
 
 export const VerifyEmailPage = () => {
@@ -28,7 +25,6 @@ export const VerifyEmailPage = () => {
   const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(location.state?.message || '');
-  const [debugOtp, setDebugOtp] = useState(location.state?.debugOtp || '');
 
   // 5-minute expiry countdown (300 seconds)
   const [expirySeconds, setExpirySeconds] = useState(300);
@@ -83,14 +79,6 @@ export const VerifyEmailPage = () => {
     }
   };
 
-  const handleAutoFill = (codeToFill) => {
-    const code = String(codeToFill || debugOtp).slice(0, 6);
-    const newDigits = code.split('');
-    while (newDigits.length < 6) newDigits.push('');
-    setDigits(newDigits);
-    inputRefs.current[5]?.focus();
-  };
-
   const fullCode = digits.join('');
 
   const handleSubmit = async (e) => {
@@ -128,10 +116,7 @@ export const VerifyEmailPage = () => {
     setError('');
     try {
       const res = await resendOtp(email.trim());
-      setSuccess(res.message || 'A fresh 6-digit OTP has been sent to your email.');
-      if (res.debug_otp) {
-        setDebugOtp(res.debug_otp);
-      }
+      setSuccess(res.message || 'A fresh 6-digit verification code has been sent to your email.');
       setCooldown(60);
       setExpirySeconds(300);
       setDigits(['', '', '', '', '', '']);
@@ -165,7 +150,7 @@ export const VerifyEmailPage = () => {
         borderRadius: 'var(--radius-lg)'
       }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{
             width: '54px',
             height: '54px',
@@ -179,64 +164,12 @@ export const VerifyEmailPage = () => {
           }}>
             <KeyRound size={26} color="#ffffff" />
           </div>
-          <h2 style={{ fontSize: '1.65rem', fontWeight: 800, margin: 0, fontFamily: 'var(--font-display)' }}>Enter Confirmation Code</h2>
+          <h2 style={{ fontSize: '1.65rem', fontWeight: 800, margin: 0, fontFamily: 'var(--font-display)' }}>
+            Enter Confirmation Code
+          </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', marginTop: '0.4rem' }}>
             Enter the 6-digit security code sent to {email ? <strong>{email}</strong> : 'your email address'}
           </p>
-        </div>
-
-        {/* Development Mode Instant OTP Card */}
-        {debugOtp && (
-          <div style={{
-            background: 'rgba(99, 102, 241, 0.12)',
-            border: '1px solid rgba(99, 102, 241, 0.35)',
-            borderRadius: '12px',
-            padding: '0.85rem 1rem',
-            marginBottom: '1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.75rem',
-            animation: 'fadeIn 0.2s ease'
-          }}>
-            <div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Zap size={13} />
-                <span>Instant Test OTP Code:</span>
-              </div>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, letterSpacing: '4px', color: '#ffffff', marginTop: '0.15rem' }}>
-                {debugOtp}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleAutoFill(debugOtp)}
-              className="btn btn-primary"
-              style={{ fontSize: '0.75rem', padding: '0.35rem 0.85rem' }}
-            >
-              Auto-fill Code
-            </button>
-          </div>
-        )}
-
-        {/* Resend Free Tier Sandbox Delivery Info */}
-        <div style={{
-          fontSize: '0.75rem',
-          color: 'var(--text-muted)',
-          background: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '8px',
-          padding: '0.55rem 0.75rem',
-          marginBottom: '1.25rem',
-          lineHeight: 1.45,
-          display: 'flex',
-          gap: '0.45rem',
-          alignItems: 'flex-start'
-        }}>
-          <Info size={14} color="var(--accent-amber)" style={{ flexShrink: 0, marginTop: '2px' }} />
-          <span>
-            <strong>Email Routing:</strong> On Resend Free Tier (<code>onboarding@resend.dev</code>), verification emails are sent to the registered owner's account (<code>uttamkalsariya1002@gmail.com</code>). Check Spam or Promotions folder in Gmail, or use the instant code above.
-          </span>
         </div>
 
         {/* Error Alert */}
