@@ -200,20 +200,22 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     
-    # Configure CORS: allow local development and all Vercel production/preview deployments
+    # Configure CORS: read allowed origins from env var CORS_ORIGINS (comma-separated), default to localhost:5173, localhost:3000
+    cors_origins_env = os.getenv("CORS_ORIGINS") or os.getenv("FRONTEND_URL")
     allowed_origins = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
         re.compile(r"^https:\/\/.*\.vercel\.app$"),
     ]
-    frontend_url = os.getenv("FRONTEND_URL")
-    if frontend_url:
-        for origin in frontend_url.split(","):
+    if cors_origins_env:
+        for origin in cors_origins_env.split(","):
             origin = origin.strip()
             if origin and origin not in allowed_origins:
                 allowed_origins.append(origin)
+    else:
+        allowed_origins.extend(["http://localhost:5173", "http://localhost:3000"])
+
+    for local_origin in ("http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "http://127.0.0.1:5173"):
+        if local_origin not in allowed_origins:
+            allowed_origins.append(local_origin)
 
     CORS(
         app,

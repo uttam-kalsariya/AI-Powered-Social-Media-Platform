@@ -1,10 +1,12 @@
-# Ignore backend and Python files during Vercel frontend builds
+# Exclude backend and Python files from Vercel frontend builds
 server/
 backend/
 *.py
 requirements.txt
 gunicorn.conf.py
+run.py
+runtime.txt
+api/
 .python-version
 atlas-credentials.env
 *.log
-
