@@ -40,6 +40,10 @@ export const RegisterPage = () => {
 
     try {
       const res = await register(username.trim(), email.trim(), password, role);
+      if (res.token) {
+        navigate('/home', { replace: true });
+        return;
+      }
       // Navigate to verification page with email
       navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`, {
         state: {

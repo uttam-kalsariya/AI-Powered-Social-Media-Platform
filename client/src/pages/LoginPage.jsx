@@ -105,6 +105,42 @@ export const LoginPage = () => {
           </div>
         )}
 
+        {/* Quick Test Accounts */}
+        <div style={{
+          marginBottom: '1.25rem',
+          padding: '0.75rem 0.85rem',
+          background: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '10px'
+        }}>
+          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '0.45rem', fontWeight: 600 }}>
+            ⚡ 1-Click Quick Login:
+          </div>
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+            {[
+              { label: 'Admin', user: 'admin', pass: 'AdminPass123!' },
+              { label: 'Alex', user: 'alex_innovator', pass: 'UserPass123!' },
+              { label: 'Uttam', user: 'uttam', pass: 'UserPass123!' },
+              { label: 'Sarah', user: 'sarah_chen', pass: 'UserPass123!' },
+              { label: 'Marcus', user: 'marcus_vance', pass: 'UserPass123!' }
+            ].map(acc => (
+              <button
+                key={acc.user}
+                type="button"
+                onClick={() => {
+                  setEmailOrUsername(acc.user);
+                  setPassword(acc.pass);
+                  setError('');
+                }}
+                className="btn btn-secondary"
+                style={{ fontSize: '0.72rem', padding: '0.2rem 0.55rem', borderRadius: '6px' }}
+              >
+                {acc.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>

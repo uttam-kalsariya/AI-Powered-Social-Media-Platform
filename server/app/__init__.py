@@ -48,6 +48,57 @@ def seed_initial_data(db):
             "status": "active"
         }
         user_id = db.users.insert_one(user_doc).inserted_id
+
+        # 3. Uttam account
+        uttam_doc = {
+            "username": "uttam",
+            "email": "uttamkalsariya1002@gmail.com",
+            "password_hash": user_hash,
+            "role": "user",
+            "is_verified": True,
+            "email_verified": True,
+            "verification_token": None,
+            "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=UttamInnovator",
+            "bio": "Lead architect and creator testing Aura features.",
+            "created_at": now,
+            "last_login": now,
+            "status": "active"
+        }
+        db.users.insert_one(uttam_doc)
+
+        # 4. Sarah Chen account
+        sarah_doc = {
+            "username": "sarah_chen",
+            "email": "sarah@aisocial.local",
+            "password_hash": user_hash,
+            "role": "user",
+            "is_verified": True,
+            "email_verified": True,
+            "verification_token": None,
+            "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SarahChen",
+            "bio": "UI/UX Designer & Design Systems enthusiast. ✨",
+            "created_at": now,
+            "last_login": now,
+            "status": "active"
+        }
+        db.users.insert_one(sarah_doc)
+
+        # 5. Marcus Vance account
+        marcus_doc = {
+            "username": "marcus_vance",
+            "email": "marcus@aisocial.local",
+            "password_hash": user_hash,
+            "role": "user",
+            "is_verified": True,
+            "email_verified": True,
+            "verification_token": None,
+            "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=MarcusVance",
+            "bio": "Product Architect & Open Source builder.",
+            "created_at": now,
+            "last_login": now,
+            "status": "active"
+        }
+        db.users.insert_one(marcus_doc)
         
         # 3. Seed initial showcase posts
         post1 = {
@@ -109,6 +160,39 @@ def seed_initial_data(db):
         })
         
         print("[DB] Initial admin, demo user, showcase posts, and sample notifications seeded successfully.")
+
+    # Ensure uttam, sarah_chen, and marcus_vance exist and are pre-verified
+    salt = bcrypt.gensalt()
+    user_pass_hash = bcrypt.hashpw("UserPass123!".encode('utf-8'), salt).decode('utf-8')
+    now = datetime.now(timezone.utc)
+    for uname, uemail, ubio, uav in [
+        ("uttam", "uttamkalsariya1002@gmail.com", "Lead architect and creator testing Aura features.", "https://api.dicebear.com/7.x/bottts/svg?seed=UttamInnovator"),
+        ("sarah_chen", "sarah@aisocial.local", "UI/UX Designer & Design Systems enthusiast. ✨", "https://api.dicebear.com/7.x/bottts/svg?seed=SarahChen"),
+        ("marcus_vance", "marcus@aisocial.local", "Product Architect & Open Source builder.", "https://api.dicebear.com/7.x/bottts/svg?seed=MarcusVance")
+    ]:
+        if not db.users.find_one({"username": uname}):
+            db.users.insert_one({
+                "username": uname,
+                "email": uemail,
+                "password_hash": user_pass_hash,
+                "role": "user",
+                "is_verified": True,
+                "email_verified": True,
+                "verification_token": None,
+                "avatar": uav,
+                "bio": ubio,
+                "created_at": now,
+                "last_login": now,
+                "status": "active"
+            })
+        else:
+            db.users.update_one({"username": uname}, {"$set": {"is_verified": True, "email_verified": True, "password_hash": user_pass_hash}})
+
+    # Also make sure admin and alex_innovator have valid passwords and verified status
+    admin_salt = bcrypt.gensalt()
+    admin_hash = bcrypt.hashpw("AdminPass123!".encode('utf-8'), admin_salt).decode('utf-8')
+    db.users.update_one({"username": "admin"}, {"$set": {"is_verified": True, "email_verified": True, "password_hash": admin_hash}})
+    db.users.update_one({"username": "alex_innovator"}, {"$set": {"is_verified": True, "email_verified": True, "password_hash": user_pass_hash}})
 
 def create_app():
     app = Flask(__name__)

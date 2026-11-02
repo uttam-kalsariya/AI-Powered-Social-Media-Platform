@@ -19,6 +19,7 @@ class Config:
     MAIL_FROM = os.getenv('MAIL_FROM', os.getenv('EMAIL_FROM', 'AI Social <onboarding@resend.dev>'))
     
     # OTP Policies
+    REQUIRE_EMAIL_VERIFICATION = os.getenv('REQUIRE_EMAIL_VERIFICATION', 'False').lower() in ('true', '1')
     OTP_EXPIRATION_MINUTES = int(os.getenv('OTP_EXPIRATION_MINUTES', 5))
     OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv('OTP_RESEND_COOLDOWN_SECONDS', 60))
     MAX_OTP_ATTEMPTS = int(os.getenv('MAX_OTP_ATTEMPTS', 5))

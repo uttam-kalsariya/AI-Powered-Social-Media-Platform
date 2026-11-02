@@ -1,8 +1,10 @@
+import re
 import secrets
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import bcrypt
+from app.config import Config
 from app.db import get_db
 from app.models.helpers import serialize_doc, to_object_id
 from app.services.email_service import send_verification_email, send_password_reset_email
@@ -52,8 +54,8 @@ def register():
         "email": email,
         "password_hash": hash_password(password),
         "role": 'admin' if role == 'admin' else 'user',
-        "is_verified": False,
-        "email_verified": False,
+        "is_verified": not getattr(Config, 'REQUIRE_EMAIL_VERIFICATION', False),
+        "email_verified": not getattr(Config, 'REQUIRE_EMAIL_VERIFICATION', False),
         "reset_token": None,
         "avatar": f"https://api.dicebear.com/7.x/bottts/svg?seed={username}",
         "bio": "Excited to connect on AI Social!",
@@ -90,7 +92,9 @@ def register():
     sanitized_user.pop('password_hash', None)
     
     return jsonify({
-        "message": "Registration successful. Please verify your email with the 6-digit code sent to your inbox.",
+        "message": "Registration successful! Welcome to Aura." if not getattr(Config, 'REQUIRE_EMAIL_VERIFICATION', False) else "Registration successful. Please verify your email with the 6-digit code sent to your inbox.",
+        "token": create_access_token(identity=str(result.inserted_id), additional_claims={"username": username, "role": user_doc["role"], "email": email}) if not getattr(Config, 'REQUIRE_EMAIL_VERIFICATION', False) else None,
+        "needs_verification": getattr(Config, 'REQUIRE_EMAIL_VERIFICATION', False),
         "user": sanitized_user,
         "email": email,
         "expires_in_minutes": 5
@@ -170,7 +174,7 @@ def login():
     user = db.users.find_one({
         "$or": [
             {"email": email_or_username.lower()},
-            {"username": email_or_username}
+            {"username": {"$regex": f"^{re.escape(email_or_username)}$", "$options": "i"}}
         ]
     })
     
@@ -178,7 +182,7 @@ def login():
         return jsonify({"error": "Invalid credentials"}), 401
 
     # Check email verification status
-    if not user.get('email_verified') and not user.get('is_verified'):
+    if getattr(Config, 'REQUIRE_EMAIL_VERIFICATION', False) and not user.get('email_verified') and not user.get('is_verified'):
         return jsonify({
             "error": "Please verify your email before logging in.",
             "email": user.get('email'),

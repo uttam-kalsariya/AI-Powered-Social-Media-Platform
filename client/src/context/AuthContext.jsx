@@ -30,7 +30,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (username, email, password, role = 'user') => {
-    return await api.auth.register({ username, email, password, role });
+    const res = await api.auth.register({ username, email, password, role });
+    if (res.token) {
+      setAuthToken(res.token);
+      setUser(res.user);
+    }
+    return res;
   };
 
   const verifyEmail = async (email, otp) => {

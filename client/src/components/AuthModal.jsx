@@ -30,14 +30,12 @@ export const AuthModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [devCode, setDevCode] = useState('');
 
   if (!isOpen) return null;
 
   const resetMessages = () => {
     setError('');
     setSuccessMsg('');
-    setDevCode('');
   };
 
   const handleLogin = async (e) => {
@@ -60,11 +58,11 @@ export const AuthModal = ({ isOpen, onClose }) => {
     resetMessages();
     try {
       const res = await register(username, email, password, role);
-      setSuccessMsg(res.message || 'Registration successful! Verification code sent.');
-      if (res.dev_verification_code) {
-        setDevCode(res.dev_verification_code);
-        setToken(res.dev_verification_code);
+      if (res.token) {
+        onClose();
+        return;
       }
+      setSuccessMsg(res.message || 'Registration successful! Verification code sent to email.');
       setMode('verify');
     } catch (err) {
       setError(err.message || 'Registration failed');
@@ -98,10 +96,6 @@ export const AuthModal = ({ isOpen, onClose }) => {
     try {
       const res = await forgotPassword(email);
       setSuccessMsg(res.message);
-      if (res.dev_reset_token) {
-        setDevCode(res.dev_reset_token);
-        setToken(res.dev_reset_token);
-      }
       setMode('reset');
     } catch (err) {
       setError(err.message || 'Request failed');
@@ -277,20 +271,6 @@ export const AuthModal = ({ isOpen, onClose }) => {
           }}>
             <CheckCircle2 size={16} />
             <span>{successMsg}</span>
-          </div>
-        )}
-
-        {devCode && (
-          <div style={{
-            padding: '0.65rem',
-            borderRadius: 'var(--radius-sm)',
-            background: 'rgba(6, 182, 212, 0.15)',
-            color: '#67e8f9',
-            fontSize: '0.82rem',
-            marginBottom: '1rem',
-            border: '1px solid rgba(6, 182, 212, 0.3)'
-          }}>
-            🔑 Dev Code (auto-filled): <strong>{devCode}</strong>
           </div>
         )}
 
