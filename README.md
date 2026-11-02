@@ -8,9 +8,20 @@ An enterprise-grade, modern social media platform engineered with **React 19**, 
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248.svg?logo=mongodb)](https://www.mongodb.com/atlas)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
 [![Gemini AI](https://img.shields.io/badge/Google_Gemini-1.5_Flash-8E75C4.svg?logo=google)](https://deepmind.google/technologies/gemini/)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live-success.svg?logo=vercel)](https://ai-powered-social-media-platform.vercel.app/home)
+[![Render Backend](https://img.shields.io/badge/Render-Live%20API-46E3B7.svg?logo=render)](https://ai-powered-social-media-platform-erlu.onrender.com/)
 [![Tests](https://img.shields.io/badge/Pytest-30%20Passed-brightgreen.svg)](docs/TESTING.md)
 
-**GitHub Repository**: [https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform](https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform.git)
+---
+
+## 🌐 Live Deployments & Repository Links
+
+| Service | Platform / Environment | Live URL | Status |
+|---|---|---|---|
+| **Frontend Web App** | Vercel (Edge CDN) | [**https://ai-powered-social-media-platform.vercel.app/home**](https://ai-powered-social-media-platform.vercel.app/home) | ![Live](https://img.shields.io/badge/Status-Online-success) |
+| **Backend API Service** | Render (Gunicorn WSGI) | [**https://ai-powered-social-media-platform-erlu.onrender.com/**](https://ai-powered-social-media-platform-erlu.onrender.com/) | ![Live](https://img.shields.io/badge/Status-Online-success) |
+| **API Health Probe** | Render Cloud Probe | [**https://ai-powered-social-media-platform-erlu.onrender.com/health**](https://ai-powered-social-media-platform-erlu.onrender.com/health) | ![200 OK](https://img.shields.io/badge/Health-200%20OK-brightgreen) |
+| **Source Code Repository** | GitHub (Git Monorepo) | [**https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform.git**](https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform.git) | ![Main](https://img.shields.io/badge/Branch-main-blue) |
 
 ---
 
@@ -50,7 +61,7 @@ Explore the comprehensive engineering documentation maintained in this repositor
 - **Dual User Personas**: Distinct workflows and dashboard experiences for **Regular Users** and **Administrators**.
 - **Credentials & Session Security**: Secure authentication powered by `bcrypt` (work factor 12) password hashing and stateless `Flask-JWT-Extended`.
 - **Resend Email OTP Verification**: Real-time email verification with HMAC-SHA256 hashed OTPs, 5-minute expiration, cooldown protection, and rate-limiting.
-- **Tokenized Password Reset**: Secure forgot-password and reset-password workflow.
+- **Tokenized Password Reset**: Secure forgot-password and reset-password workflow with auto-fill fallback and resend mechanisms.
 - **Admin Login Alerts**: Real-time notification dispatches to platform administrators upon user login events.
 
 ### 3. 📱 Social Feed, Reels & Discovery
@@ -95,9 +106,9 @@ Explore the comprehensive engineering documentation maintained in this repositor
 | **Backend** | Python 3.11/3.12, Flask 3.0.3, Gunicorn 22.0.0, Flask-CORS, Flask-JWT-Extended, PyMongo 4.7.2, Bcrypt |
 | **Database** | MongoDB Atlas (Cloud Cluster) / Resilient in-memory mongomock test engine |
 | **AI Integration** | Google Gemini 1.5 Flash API + Built-in Local Heuristic Fallback Engine |
-| **Email Delivery** | Resend API + SMTP fallback for OTP delivery |
+| **Email Delivery** | Resend API + SMTP fallback for OTP and password reset delivery |
 | **Testing** | Pytest (30 automated unit and integration tests passing) |
-| **Deployment** | Render (Flask + Gunicorn), Vercel (React Frontend), MongoDB Atlas (Cloud DB) |
+| **Cloud Hosting** | Vercel (React Frontend), Render (Flask + Gunicorn), MongoDB Atlas (Cloud DB) |
 
 ---
 
@@ -109,11 +120,14 @@ AI-Powered-Social-Media-Platform/
 │   ├── src/
 │   │   ├── components/          # Reusable UI (Navbar, PostCard, CreatePostCard, StreakModal, AdminDashboard)
 │   │   ├── pages/               # Route views (HomePage, ExplorePage, ReelsPage, MessagesPage, ProfilePage, SettingsPage)
-│   │   ├── context/             # AuthContext.jsx
+│   │   ├── context/             # AuthContext.jsx, ThemeContext.jsx
 │   │   ├── services/            # axiosClient.js, api.js
+│   │   ├── config.js            # Centralized API configuration (import.meta.env.VITE_API_URL)
 │   │   ├── App.jsx              # Application router
 │   │   └── index.css            # Tailwind directives & glassmorphic tokens
 │   ├── tailwind.config.js       # Tailwind configuration
+│   ├── vercel.json              # Vercel SPA rewrites config
+│   ├── .env.example             # Frontend environment template
 │   └── package.json
 │
 ├── server/                      # Flask Backend API
@@ -126,9 +140,11 @@ AI-Powered-Social-Media-Platform/
 │   ├── tests/                   # 30 automated Pytest unit and integration tests
 │   ├── test_mongo.py            # Standalone MongoDB Atlas pre-flight diagnostic script
 │   ├── run.py                   # Server launch entry point
+│   ├── gunicorn.conf.py         # Dynamic Gunicorn port binding for Render ($PORT)
 │   ├── requirements.txt         # Pinned Python dependencies
 │   └── .env                     # Local environment file (Excluded from Git)
 │
+├── .vercelignore                # Excludes backend/Python files from Vercel frontend builds
 ├── test_mongo.py                # Standalone diagnostic runner
 ├── requirements.txt             # Root requirements
 ├── .python-version              # 3.11.9
@@ -173,7 +189,7 @@ cd server
 .\venv\Scripts\activate
 pytest tests
 ```
-*30 passed in ~20s*
+*30 passed in ~11s*
 
 ### 4. Verify MongoDB Atlas Connectivity
 ```powershell

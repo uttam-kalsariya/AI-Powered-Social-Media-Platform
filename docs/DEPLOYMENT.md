@@ -26,8 +26,9 @@ graph LR
     Render -->|Email OTP Delivery| Resend[Resend API]
 ```
 
-- **Frontend**: Hosted on **Vercel** with global edge CDN delivery.
-- **Backend API**: Hosted on **Render** running Gunicorn WSGI server on Python 3.11.9.
+- **Frontend**: Hosted on **Vercel** with global edge CDN delivery: [**https://ai-powered-social-media-platform.vercel.app/home**](https://ai-powered-social-media-platform.vercel.app/home)
+- **Backend API**: Hosted on **Render** running Gunicorn WSGI server: [**https://ai-powered-social-media-platform-erlu.onrender.com/**](https://ai-powered-social-media-platform-erlu.onrender.com/) (Health probe: [`/health`](https://ai-powered-social-media-platform-erlu.onrender.com/health))
+- **Source Code**: [**https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform.git**](https://github.com/uttam-kalsariya/AI-Powered-Social-Media-Platform.git)
 - **Database**: Hosted on **MongoDB Atlas** with automatic daily backups and IP allowlists.
 - **Email Service**: **Resend** for OTP and transactional security alerts.
 
