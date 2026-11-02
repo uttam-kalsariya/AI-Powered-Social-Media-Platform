@@ -197,7 +197,7 @@ export const ProfilePage = () => {
           <img
             src={displayUser?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${displayUser?.username || 'user'}`}
             alt={displayUser?.username}
-            style={{ width: '96px', height: '96px', borderRadius: '50%', background: '#1e293b', border: '3px solid var(--primary)', objectFit: 'cover' }}
+            style={{ width: '96px', height: '96px', borderRadius: '50%', background: 'var(--bg-surface-elevated)', border: '3px solid var(--primary)', objectFit: 'cover' }}
           />
 
           <div style={{ flex: 1, minWidth: '240px' }}>
@@ -322,7 +322,7 @@ export const ProfilePage = () => {
             marginBottom: '1rem'
           }}>
             <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
+              background: 'var(--bg-surface-elevated)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '10px',
               padding: '0.75rem'
@@ -335,7 +335,7 @@ export const ProfilePage = () => {
             </div>
 
             <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
+              background: 'var(--bg-surface-elevated)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '10px',
               padding: '0.75rem'
@@ -348,7 +348,7 @@ export const ProfilePage = () => {
             </div>
 
             <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
+              background: 'var(--bg-surface-elevated)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '10px',
               padding: '0.75rem'
@@ -360,7 +360,7 @@ export const ProfilePage = () => {
             </div>
 
             <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
+              background: 'var(--bg-surface-elevated)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '10px',
               padding: '0.75rem'
@@ -573,7 +573,7 @@ export const ProfilePage = () => {
                         justifyContent: 'space-between',
                         padding: '0.5rem 0.6rem',
                         borderRadius: '8px',
-                        background: 'rgba(255, 255, 255, 0.02)'
+                        background: 'var(--bg-surface-elevated)'
                       }}
                     >
                       <div
@@ -586,7 +586,7 @@ export const ProfilePage = () => {
                         <img
                           src={item.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${item.username}`}
                           alt={item.username}
-                          style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#1e293b' }}
+                          style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--bg-surface)' }}
                         />
                         <div style={{ minWidth: 0, overflow: 'hidden' }}>
                           <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
