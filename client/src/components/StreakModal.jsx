@@ -110,12 +110,12 @@ export const StreakModal = ({ isOpen, onClose, initialTab = 'calendar' }) => {
       >
         {/* Header */}
         <div style={{
-          padding: '1.25rem 1.5rem',
+          padding: '1rem 1.25rem',
           borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: 'rgba(255, 255, 255, 0.02)'
+          background: 'var(--bg-surface-elevated)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
@@ -166,14 +166,14 @@ export const StreakModal = ({ isOpen, onClose, initialTab = 'calendar' }) => {
         <div style={{
           display: 'flex',
           borderBottom: '1px solid var(--border-subtle)',
-          padding: '0 1rem',
-          gap: '0.5rem',
-          background: 'rgba(0, 0, 0, 0.15)'
+          padding: '0 0.5rem',
+          gap: '0.25rem',
+          background: 'var(--bg-surface)'
         }}>
           {[
-            { id: 'calendar', label: 'Activity Calendar', icon: Calendar },
-            { id: 'badges', label: 'Badges & Trophies', icon: Award },
-            { id: 'leaderboard', label: 'Leaderboard', icon: Trophy }
+            { id: 'calendar', label: 'Calendar', fullLabel: 'Activity Calendar', icon: Calendar },
+            { id: 'badges', label: 'Badges', fullLabel: 'Badges & Trophies', icon: Award },
+            { id: 'leaderboard', label: 'Ranks', fullLabel: 'Leaderboard', icon: Trophy }
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -184,8 +184,8 @@ export const StreakModal = ({ isOpen, onClose, initialTab = 'calendar' }) => {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.75rem 1rem',
+                  gap: '0.35rem',
+                  padding: '0.65rem 0.75rem',
                   fontSize: '0.82rem',
                   fontWeight: 600,
                   border: 'none',
@@ -193,10 +193,12 @@ export const StreakModal = ({ isOpen, onClose, initialTab = 'calendar' }) => {
                   color: isActive ? 'var(--primary)' : 'var(--text-muted)',
                   borderBottom: isActive ? '2px solid var(--primary)' : '2px solid transparent',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  flex: 1,
+                  justifyContent: 'center'
                 }}
               >
-                <Icon size={15} />
+                <Icon size={14} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -204,7 +206,7 @@ export const StreakModal = ({ isOpen, onClose, initialTab = 'calendar' }) => {
         </div>
 
         {/* Modal Body / Tab Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem 1.5rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.15rem' }}>
           {loading && (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem', color: 'var(--primary)' }}>
               <RefreshCw size={20} className="animate-spin" />
@@ -217,46 +219,46 @@ export const StreakModal = ({ isOpen, onClose, initialTab = 'calendar' }) => {
               {/* Stat Summary Cards */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '0.75rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                gap: '0.5rem',
                 marginBottom: '1.25rem'
               }}>
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: 'var(--bg-surface-elevated)',
                   border: '1px solid var(--border-subtle)',
                   borderRadius: '12px',
-                  padding: '0.75rem',
+                  padding: '0.65rem 0.5rem',
                   textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Streak</div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f59e0b', marginTop: '0.2rem' }}>
-                    {streak.current_streak} <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>days</span>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Streak</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f59e0b', marginTop: '0.2rem' }}>
+                    {streak.current_streak} <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>days</span>
                   </div>
                 </div>
 
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: 'var(--bg-surface-elevated)',
                   border: '1px solid var(--border-subtle)',
                   borderRadius: '12px',
-                  padding: '0.75rem',
+                  padding: '0.65rem 0.5rem',
                   textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>All-Time Best</div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#ec4899', marginTop: '0.2rem' }}>
-                    {streak.longest_streak || 0} <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>days</span>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>All-Time Best</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ec4899', marginTop: '0.2rem' }}>
+                    {streak.longest_streak || 0} <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>days</span>
                   </div>
                 </div>
 
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: 'var(--bg-surface-elevated)',
                   border: '1px solid var(--border-subtle)',
                   borderRadius: '12px',
-                  padding: '0.75rem',
+                  padding: '0.65rem 0.5rem',
                   textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Active Days</div>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#10b981', marginTop: '0.2rem' }}>
-                    {streak.total_active_days || (streak.active_dates ? streak.active_dates.length : 0)} <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>days</span>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Active Days</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981', marginTop: '0.2rem' }}>
+                    {streak.total_active_days || (streak.active_dates ? streak.active_dates.length : 0)} <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>days</span>
                   </div>
                 </div>
               </div>
