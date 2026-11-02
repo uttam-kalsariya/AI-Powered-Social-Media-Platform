@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Send, Search, User, Sparkles, Bot, Clock } from 'lucide-react';
+import { Send, Search, User, Sparkles, Bot, Clock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const MessagesPage = () => {
   const { user } = useAuth();
 
   const [activeContact, setActiveContact] = useState('alex');
+  const [showMobileChat, setShowMobileChat] = useState(false);
   const [messages, setMessages] = useState([
     { id: 1, sender: 'alex', text: 'Hey! Did you check out the new AI summarization feature on Aura?', time: '10:45 AM' },
     { id: 2, sender: 'me', text: 'Yes, it works really well on long discussions. Highly accurate!', time: '10:48 AM' },
@@ -36,17 +37,9 @@ export const MessagesPage = () => {
   };
 
   return (
-    <div className="glass-panel" style={{
-      maxWidth: '1000px',
-      margin: '0 auto',
-      height: 'calc(100vh - 160px)',
-      display: 'grid',
-      gridTemplateColumns: '320px 1fr',
-      borderRadius: 'var(--radius-lg)',
-      overflow: 'hidden'
-    }}>
+    <div className="glass-panel max-w-[1000px] mx-auto h-[calc(100vh-140px)] flex rounded-2xl overflow-hidden border border-[var(--border-subtle)]">
       {/* Sidebar / Contacts List */}
-      <div style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
+      <div className={`w-full md:w-[320px] md:border-r border-[var(--border-subtle)] flex-col shrink-0 ${showMobileChat ? 'hidden md:flex' : 'flex'}`}>
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.75rem' }}>Direct Messages</h3>
           <div style={{ position: 'relative' }}>
@@ -54,15 +47,11 @@ export const MessagesPage = () => {
             <input
               type="text"
               placeholder="Search conversations..."
+              className="input-field"
               style={{
                 width: '100%',
                 padding: '0.5rem 0.75rem 0.5rem 2.2rem',
-                borderRadius: 'var(--radius-sm)',
-                background: 'rgba(15, 23, 42, 0.6)',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem',
-                outline: 'none'
+                fontSize: '0.85rem'
               }}
             />
           </div>
@@ -72,7 +61,10 @@ export const MessagesPage = () => {
           {contacts.map(c => (
             <div
               key={c.id}
-              onClick={() => setActiveContact(c.id)}
+              onClick={() => {
+                setActiveContact(c.id);
+                setShowMobileChat(true);
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -80,8 +72,8 @@ export const MessagesPage = () => {
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
-                background: activeContact === c.id ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                border: activeContact === c.id ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid transparent',
+                background: activeContact === c.id ? 'rgba(0, 149, 246, 0.12)' : 'transparent',
+                border: activeContact === c.id ? '1px solid rgba(0, 149, 246, 0.3)' : '1px solid transparent',
                 marginBottom: '0.35rem',
                 transition: 'all 0.15s ease'
               }}
@@ -89,7 +81,7 @@ export const MessagesPage = () => {
               <img
                 src={c.avatar}
                 alt={c.name}
-                style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#1e293b' }}
+                style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg-surface-elevated)' }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -122,7 +114,7 @@ export const MessagesPage = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div className={`flex-1 flex-col h-full min-w-0 ${!showMobileChat ? 'hidden md:flex' : 'flex'}`}>
         {/* Chat Header */}
         <div style={{
           padding: '0.85rem 1.25rem',
@@ -130,12 +122,19 @@ export const MessagesPage = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '0.75rem',
-          background: 'rgba(15, 23, 42, 0.3)'
+          background: 'var(--bg-surface)'
         }}>
+          <button
+            onClick={() => setShowMobileChat(false)}
+            className="md:hidden p-1.5 -ml-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            title="Back to conversations"
+          >
+            <ArrowLeft size={18} />
+          </button>
           <img
             src={`https://api.dicebear.com/7.x/bottts/svg?seed=${activeContact}`}
             alt={activeContact}
-            style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#1e293b' }}
+            style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-surface-elevated)' }}
           />
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>@{activeContact}</div>
@@ -155,7 +154,7 @@ export const MessagesPage = () => {
                 key={m.id}
                 style={{
                   alignSelf: isMe ? 'flex-end' : 'flex-start',
-                  maxWidth: '70%',
+                  maxWidth: '75%',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: isMe ? 'flex-end' : 'flex-start'
@@ -164,8 +163,9 @@ export const MessagesPage = () => {
                 <div style={{
                   padding: '0.7rem 1rem',
                   borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                  background: isMe ? 'var(--primary)' : 'rgba(30, 41, 59, 0.75)',
-                  color: '#fff',
+                  background: isMe ? 'var(--primary)' : 'var(--bg-surface-elevated)',
+                  color: isMe ? '#fff' : 'var(--text-primary)',
+                  border: isMe ? 'none' : '1px solid var(--border-subtle)',
                   fontSize: '0.88rem',
                   lineHeight: 1.45,
                   boxShadow: 'var(--shadow-sm)'
@@ -181,21 +181,17 @@ export const MessagesPage = () => {
         </div>
 
         {/* Input Bar */}
-        <form onSubmit={handleSendMessage} style={{ padding: '1rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: '0.5rem' }}>
+        <form onSubmit={handleSendMessage} style={{ padding: '1rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: '0.5rem', background: 'var(--bg-surface)' }}>
           <input
             type="text"
             placeholder="Type your message..."
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
+            className="input-field"
             style={{
               flex: 1,
               padding: '0.7rem 1rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(15, 23, 42, 0.6)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-primary)',
-              fontSize: '0.9rem',
-              outline: 'none'
+              fontSize: '0.9rem'
             }}
           />
           <button
