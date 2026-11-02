@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, CheckCircle, Clock, Heart, MessageSquare, UserPlus, ShieldAlert, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, CheckCircle, Clock, Heart, MessageSquare, UserPlus, ShieldAlert, RefreshCw, ChevronRight } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export const NotificationsPage = () => {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -79,24 +81,36 @@ export const NotificationsPage = () => {
           {notifications.map(n => {
             const isLogin = n.type === 'login';
             const isReg = n.type === 'registration';
+            const handleNotifClick = () => {
+              if (isLogin && isAdmin) {
+                navigate('/admin');
+              } else if (n.sender_name) {
+                navigate(`/profile/${n.sender_name}`);
+              } else {
+                navigate('/home');
+              }
+            };
             return (
               <div
                 key={n.id || n._id}
-                className="glass-panel"
+                onClick={handleNotifClick}
+                className="glass-panel group"
                 style={{
                   padding: '1rem 1.25rem',
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: '0.85rem',
                   borderLeft: isLogin ? '4px solid #f59e0b' : isReg ? '4px solid #10b981' : n.is_read ? '1px solid var(--border-subtle)' : '4px solid var(--primary)',
-                  background: n.is_read ? 'var(--bg-card)' : 'rgba(99, 102, 241, 0.08)'
+                  background: n.is_read ? 'var(--bg-card)' : 'rgba(0, 149, 246, 0.08)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
                 }}
               >
                 <div style={{
                   width: '38px',
                   height: '38px',
                   borderRadius: '50%',
-                  background: isLogin ? 'rgba(245, 158, 11, 0.2)' : 'rgba(99, 102, 241, 0.2)',
+                  background: isLogin ? 'rgba(245, 158, 11, 0.2)' : 'rgba(0, 149, 246, 0.15)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -105,9 +119,12 @@ export const NotificationsPage = () => {
                   {isLogin ? <ShieldAlert size={18} color="#f59e0b" /> : <Bell size={18} color="var(--primary)" />}
                 </div>
 
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: isLogin ? '#fcd34d' : 'var(--text-primary)' }}>
-                    {isLogin ? 'Login Activity' : n.sender_name || 'System Notification'}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: isLogin ? '#f59e0b' : 'var(--text-primary)' }}>
+                      {isLogin ? 'Login Security Alert' : n.sender_name || 'System Notification'}
+                    </div>
+                    <ChevronRight size={15} className="text-[var(--text-muted)] group-hover:translate-x-0.5 transition-transform" />
                   </div>
                   <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
                     {n.message}
