@@ -89,14 +89,12 @@ export const SettingsPage = () => {
               type="text"
               value={user?.username || ''}
               disabled
+              className="input-field"
               style={{
-                width: '100%',
-                padding: '0.65rem 1rem',
-                borderRadius: 'var(--radius-sm)',
-                background: 'rgba(15, 23, 42, 0.4)',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-muted)',
-                fontSize: '0.9rem'
+                opacity: 0.75,
+                cursor: 'not-allowed',
+                background: 'var(--bg-surface-elevated)',
+                color: 'var(--text-muted)'
               }}
             />
           </div>
@@ -109,14 +107,12 @@ export const SettingsPage = () => {
               type="email"
               value={user?.email || ''}
               disabled
+              className="input-field"
               style={{
-                width: '100%',
-                padding: '0.65rem 1rem',
-                borderRadius: 'var(--radius-sm)',
-                background: 'rgba(15, 23, 42, 0.4)',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-muted)',
-                fontSize: '0.9rem'
+                opacity: 0.75,
+                cursor: 'not-allowed',
+                background: 'var(--bg-surface-elevated)',
+                color: 'var(--text-muted)'
               }}
             />
           </div>
@@ -130,15 +126,8 @@ export const SettingsPage = () => {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell the community about yourself..."
+              className="textarea-field"
               style={{
-                width: '100%',
-                padding: '0.65rem 1rem',
-                borderRadius: 'var(--radius-sm)',
-                background: 'rgba(15, 23, 42, 0.7)',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem',
-                outline: 'none',
                 resize: 'vertical'
               }}
             />
@@ -153,16 +142,7 @@ export const SettingsPage = () => {
               value={avatar}
               onChange={(e) => setAvatar(e.target.value)}
               placeholder="https://..."
-              style={{
-                width: '100%',
-                padding: '0.65rem 1rem',
-                borderRadius: 'var(--radius-sm)',
-                background: 'rgba(15, 23, 42, 0.7)',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-primary)',
-                fontSize: '0.9rem',
-                outline: 'none'
-              }}
+              className="input-field"
             />
           </div>
 
