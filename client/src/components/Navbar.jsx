@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -22,7 +22,8 @@ import {
   Moon,
   PlusSquare,
   Settings,
-  Flame
+  Flame,
+  X
 } from 'lucide-react';
 
 export const Navbar = () => {
@@ -38,6 +39,19 @@ export const Navbar = () => {
   const [showStreakModal, setShowStreakModal] = useState(false);
 
   const activePath = location.pathname;
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -155,7 +169,7 @@ export const Navbar = () => {
             )}
 
             {/* Notifications Trigger in Sidebar */}
-            <div className="relative">
+            <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="flex items-center gap-3.5 px-3 py-2.5 rounded-xl font-medium text-sm transition text-left w-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]"
@@ -174,19 +188,27 @@ export const Navbar = () => {
 
               {/* Notifications Popup */}
               {showNotifications && (
-                <div className="glass-panel-elevated absolute left-full top-0 ml-3 w-80 max-h-96 overflow-y-auto p-3 z-50 rounded-xl shadow-xl">
+                <div className="glass-panel-elevated fixed md:absolute left-16 lg:left-full top-20 md:top-0 ml-2 w-80 max-h-[460px] overflow-y-auto p-3 z-50 rounded-xl shadow-2xl border border-[var(--border-subtle)]">
                   <div className="flex justify-between items-center mb-2.5 pb-2 border-b border-[var(--border-subtle)]">
                     <span className="font-semibold text-sm text-[var(--text-primary)]">
                       {isAdmin ? '🛡️ Admin & Security' : '🔔 Notifications'}
                     </span>
-                    {unreadCount > 0 && (
-                      <button 
-                        onClick={handleMarkAllRead} 
-                        className="text-xs text-[#0095F6] flex items-center gap-1 hover:underline"
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={handleMarkAllRead} 
+                          className="text-xs text-[#0095F6] flex items-center gap-1 hover:underline"
+                        >
+                          <CheckCircle size={12} /> Mark read
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setShowNotifications(false)}
+                        className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-0.5 rounded"
                       >
-                        <CheckCircle size={12} /> Mark read
+                        <X size={15} />
                       </button>
-                    )}
+                    </div>
                   </div>
                   {notifications.length === 0 ? (
                     <div className="text-center py-6 text-xs text-[var(--text-muted)]">
