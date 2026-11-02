@@ -7,3 +7,4 @@ gunicorn.conf.py
 .python-version
 atlas-credentials.env
 *.log
+
