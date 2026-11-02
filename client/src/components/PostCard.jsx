@@ -264,7 +264,7 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
           <img
             src={post.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_name}`}
             alt={post.author_name}
-            style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#1e293b' }}
+            style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'var(--bg-surface-elevated)' }}
           />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
@@ -624,7 +624,7 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
                     <img
                       src={c.author_avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${c.author_name}`}
                       alt={c.author_name}
-                      style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#1e293b' }}
+                      style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--bg-surface-elevated)' }}
                     />
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -633,7 +633,7 @@ export const PostCard = ({ post, onPostDeleted, onPostUpdated, onOpenAuth }) => 
                           <span className="badge badge-admin" style={{ fontSize: '0.55rem', padding: '0.05rem 0.25rem' }}>Admin</span>
                         )}
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                          {c.created_at ? new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                          {c.created_at ? new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                         </span>
                       </div>
                       <div style={{ color: 'var(--text-secondary)', marginTop: '0.2rem' }}>

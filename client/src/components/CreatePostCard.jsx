@@ -19,6 +19,7 @@ export const CreatePostCard = ({ onPostCreated, onOpenAuth }) => {
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState([]);
   const [showImageInput, setShowImageInput] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   
   // AI Generator state
@@ -122,7 +123,7 @@ export const CreatePostCard = ({ onPostCreated, onOpenAuth }) => {
           <img
             src={user?.avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=Guest"}
             alt="avatar"
-            style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#1e293b' }}
+            style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--bg-surface-elevated)' }}
           />
           <div>
             <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>
@@ -200,12 +201,23 @@ export const CreatePostCard = ({ onPostCreated, onOpenAuth }) => {
               className="input-field"
               placeholder="Paste Image URL (e.g. https://images.unsplash.com/...)"
               value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              onChange={(e) => {
+                setImageUrl(e.target.value);
+                setImageError(false);
+              }}
               style={{ fontSize: '0.85rem' }}
             />
-            {imageUrl && (
+            {imageUrl && !imageError && (
               <div style={{ marginTop: '0.5rem', maxHeight: '180px', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
-                <img src={imageUrl} alt="preview" style={{ width: '100%', objectFit: 'cover' }} onError={() => setError('Invalid image URL')} />
+                <img 
+                  src={imageUrl} 
+                  alt="preview" 
+                  style={{ width: '100%', objectFit: 'cover' }} 
+                  onError={() => {
+                    setImageError(true);
+                    setError('Unable to load preview from this image URL.');
+                  }} 
+                />
               </div>
             )}
           </div>
